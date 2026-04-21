@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WITH 자동 진단</title>
 
 <style>
 body{margin:0;font-family:sans-serif;background:#0b1522;color:#fff}
-.wrap{max-width:1100px;margin:0 auto;padding:40px}
+.wrap{max-width:1100px;margin:auto;padding:40px}
 .card{background:#fff;color:#000;border-radius:20px;padding:20px;margin-bottom:20px}
 .input{width:100%;padding:14px;border-radius:10px;border:1px solid #ddd}
 .btn{padding:14px;border:none;border-radius:10px;background:#2ea8ff;color:#fff;font-weight:bold;cursor:pointer}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .chip{padding:10px 14px;border-radius:999px;background:#eee;cursor:pointer}
 .chip.active{background:#2ea8ff;color:#fff}
-.summary{background:#f3f8ff;padding:15px;border-radius:12px;margin-top:10px}
+.summary{background:#f3f8ff;padding:15px;border-radius:12px;margin-top:10px;color:#000}
 .result{background:#fff;color:#000;padding:20px;border-radius:20px;margin-top:20px}
 </style>
 </head>
@@ -22,11 +22,11 @@ body{margin:0;font-family:sans-serif;background:#0b1522;color:#fff}
 <body>
 <div class="wrap">
 
-<h2>WITH 자동 진단</h2>
+<h2>WITH 자동 진단 시스템</h2>
 
 <div class="card">
 
-<input id="link" class="input" placeholder="네이버 지도 링크 입력"/>
+<input id="link" class="input" placeholder="네이버 지도 링크 입력">
 <br><br>
 <button class="btn" onclick="parse()">자동 분석</button>
 
@@ -34,15 +34,17 @@ body{margin:0;font-family:sans-serif;background:#0b1522;color:#fff}
 
 <br>
 
-<input id="name" class="input" placeholder="업체명"/>
+<input id="name" class="input" placeholder="업체명">
 <br><br>
-<input id="region" class="input" placeholder="지역"/>
+<input id="phone" class="input" placeholder="연락처">
+<br><br>
+<input id="region" class="input" placeholder="지역">
 
 <h4>업종</h4>
-<div id="industry"></div>
+<div id="industry" class="chips"></div>
 
 <h4>위치</h4>
-<div id="location"></div>
+<div id="location" class="chips"></div>
 
 <br>
 <button class="btn" onclick="generate()">결과 생성</button>
@@ -53,131 +55,165 @@ body{margin:0;font-family:sans-serif;background:#0b1522;color:#fff}
 
 </div>
 
+<!-- 🔥 신청 모달 -->
+<div id="applyModal" style="
+position:fixed; inset:0; background:rgba(0,0,0,.7);
+display:none; align-items:center; justify-content:center; z-index:999;
+">
+<div style="width:90%;max-width:500px;background:#fff;color:#000;padding:20px;border-radius:20px">
+
+<h3>패키지 신청</h3>
+
+<input id="applyName" placeholder="업체명" class="input">
+<br><br>
+<input id="applyPhone" placeholder="연락처" class="input">
+<br><br>
+<input id="applyRegion" placeholder="지역" class="input">
+<br><br>
+
+<button class="btn" onclick="requestPayment()">🚀 결제하고 맡기기</button>
+<br><br>
+<button onclick="closeModal()" style="width:100%">취소</button>
+
+</div>
+</div>
+
 <script>
 
-const industries = [
+const industries=[
 "고깃집","횟집","이자카야","술집","한식집","중식집","일식집","양식집",
 "카페","디저트카페","베이커리","치킨집","햄버거집"
 ];
 
-const locations = [
+const locations=[
 "역 바로 앞","역 도보 3분","역 도보 5~10분",
 "골목 안쪽","대로변","상가 내부",
-"오피스 상권","주택가","관광지"
+"오피스 밀집 지역","주택 밀집 지역","관광지"
 ];
 
-let state={
-industry:"",
-location:""
-};
+let state={industry:"",location:""};
 
 function render(){
-const iWrap=document.getElementById('industry');
-const lWrap=document.getElementById('location');
+const i=document.getElementById('industry');
+const l=document.getElementById('location');
+i.innerHTML=""; l.innerHTML="";
 
-iWrap.innerHTML="";
-lWrap.innerHTML="";
-
-industries.forEach(i=>{
-const el=document.createElement('div');
-el.className='chip'+(state.industry===i?' active':'');
-el.innerText=i;
-el.onclick=()=>{state.industry=i;render();}
-iWrap.appendChild(el);
+industries.forEach(v=>{
+let el=document.createElement('div');
+el.className='chip'+(state.industry===v?' active':'');
+el.innerText=v;
+el.onclick=()=>{state.industry=v;render();}
+i.appendChild(el);
 });
 
-locations.forEach(l=>{
-const el=document.createElement('div');
-el.className='chip'+(state.location===l?' active':'');
-el.innerText=l;
-el.onclick=()=>{state.location=l;render();}
-lWrap.appendChild(el);
+locations.forEach(v=>{
+let el=document.createElement('div');
+el.className='chip'+(state.location===v?' active':'');
+el.innerText=v;
+el.onclick=()=>{state.location=v;render();}
+l.appendChild(el);
 });
 }
 
-function extractKeyword(url){
+function extract(url){
 try{
 const u=new URL(url);
 return decodeURIComponent(u.searchParams.get('query')||u.searchParams.get('searchText')||"");
-}catch{
-return "";
-}
+}catch{return "";}
 }
 
-function detect(keyword){
-let text=keyword.replace(/\s/g,"");
-
+function detect(k){
+k=k.replace(/\s/g,"");
 const rules=[
-{w:["횟집","회","대방어","광어"],i:"횟집"},
-{w:["이자카야","꼬치","사케"],i:"이자카야"},
-{w:["술집","포차","바","펍"],i:"술집"},
-{w:["삼겹살","고기","갈비"],i:"고깃집"},
+{w:["횟집","회","광어"],i:"횟집"},
+{w:["이자카야","꼬치"],i:"이자카야"},
+{w:["술집","포차","펍"],i:"술집"},
+{w:["삼겹살","고기"],i:"고깃집"},
 {w:["짜장","짬뽕","마라"],i:"중식집"},
-{w:["초밥","라멘","돈카츠"],i:"일식집"},
-{w:["파스타","피자","브런치"],i:"양식집"},
+{w:["초밥","라멘"],i:"일식집"},
+{w:["파스타","피자"],i:"양식집"},
 {w:["카페","커피"],i:"카페"},
-{w:["케이크","디저트"],i:"디저트카페"},
-{w:["베이커리","빵"],i:"베이커리"},
+{w:["디저트","케이크"],i:"디저트카페"},
+{w:["빵","베이커리"],i:"베이커리"},
 {w:["치킨"],i:"치킨집"},
-{w:["버거","햄버거"],i:"햄버거집"}
+{w:["버거"],i:"햄버거집"}
 ];
-
 for(let r of rules){
-if(r.w.some(w=>text.includes(w))) return r.i;
+if(r.w.some(w=>k.includes(w))) return r.i;
 }
-
 return "";
 }
 
-function confidence(keyword,industry,region){
-let score=0;
-if(keyword) score+=40;
-if(industry) score+=30;
-if(region) score+=30;
-
-if(score>=80) return "높음";
-if(score>=50) return "보통";
-return "낮음";
+function confidence(k,i,r){
+let s=0;
+if(k)s+=40;if(i)s+=30;if(r)s+=30;
+return s>=80?"높음":s>=50?"보통":"낮음";
 }
 
 function parse(){
 const link=document.getElementById('link').value;
-const keyword=extractKeyword(link);
-const industry=detect(keyword);
+const k=extract(link);
+const i=detect(k);
 
 let region="";
-const regionList=["강남","송파","잠실","건대","홍대","제주","서면"];
-regionList.forEach(r=>{
-if(keyword.includes(r)) region=r;
+["강남","송파","잠실","건대","홍대","제주","서면"].forEach(r=>{
+if(k.includes(r)) region=r;
 });
 
-let name=keyword.replace(region,"").replace(industry,"").trim();
+let name=k.replace(region,"").replace(i,"").trim();
 
 document.getElementById('name').value=name;
 document.getElementById('region').value=region;
-state.industry=industry;
-
-const conf=confidence(keyword,industry,region);
+state.industry=i;
 
 document.getElementById('summary').style.display='block';
 document.getElementById('summary').innerHTML=`
-검색어: ${keyword || "-"}<br>
-업종: ${industry || "-"}<br>
-지역: ${region || "-"}<br>
-업체명: ${name || "-"}<br>
-신뢰도: ${conf}
+검색어: ${k||"-"}<br>
+업종: ${i||"-"}<br>
+지역: ${region||"-"}<br>
+업체명: ${name||"-"}<br>
+신뢰도: ${confidence(k,i,region)}
 `;
 
 render();
 }
 
 function generate(){
-const name=document.getElementById('name').value;
-const region=document.getElementById('region').value;
+const n=document.getElementById('name').value;
+const r=document.getElementById('region').value;
 
-const desc=`${region} ${state.industry} ${name}은 ${state.location} 위치에 있으며 방문 접근성이 좋고 검색 노출을 고려한 최적화 문구입니다.`;
+document.getElementById('result').innerHTML=`
+<h3>자동 결과</h3>
+<p>${r} ${state.industry} ${n}은 ${state.location} 위치 기반으로 방문 접근성과 노출을 고려한 구조입니다.</p>
 
-document.getElementById('result').innerText=desc;
+<br>
+<div style="color:red;font-weight:bold;">
+⚠ 이 상태로는 상위노출 어렵습니다
+</div>
+
+<br>
+<button class="btn" onclick="openApply()">🚀 바로 맡기기 (패키지)</button>
+`;
+}
+
+function openApply(){
+document.getElementById('applyModal').style.display='flex';
+document.getElementById('applyName').value=document.getElementById('name').value;
+document.getElementById('applyPhone').value=document.getElementById('phone').value;
+document.getElementById('applyRegion').value=document.getElementById('region').value;
+}
+
+function closeModal(){
+document.getElementById('applyModal').style.display='none';
+}
+
+function requestPayment(){
+const n=document.getElementById('applyName').value;
+const p=document.getElementById('applyPhone').value;
+
+if(!n||!p){alert("정보 입력");return;}
+
+window.location.href="https://toss.me/너결제링크";
 }
 
 render();

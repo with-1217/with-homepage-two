@@ -1161,10 +1161,20 @@
 
     function getForm(){
       return {
+        existingDescription: document.getElementById('existingDescription').value.trim(),
         name: document.getElementById('name').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         region: document.getElementById('region').value.trim(),
         landmark: document.getElementById('landmark').value.trim(),
+        <div class="field" style="grid-column:1 / -1;">
+  <label for="existingDescription">현재 플레이스 상세설명</label>
+  <textarea
+    id="existingDescription"
+    class="input"
+    placeholder="현재 네이버 플레이스에 들어가 있는 상세설명을 그대로 붙여넣어 주세요"
+    style="min-height:160px; resize:vertical;"
+  ></textarea>
+</div>
         category: state.category,
         industry: state.industry,
         service: state.service,
@@ -1176,22 +1186,26 @@
       };
     }
 
-    function calcScore(f){
-      let score = 34;
-      if (f.name) score += 7;
-      if (f.phone) score += 5;
-      if (f.region) score += 7;
-      if (f.landmark) score += 6;
-      if (f.category) score += 5;
-      if (f.industry) score += 7;
-      if (f.service) score += 6;
-      if (f.target) score += 6;
-      if (f.location) score += 6;
-      if (f.strength) score += 6;
-      if (f.parking) score += 4;
-      return Math.min(score, 96);
-    };
-    
+function calcScore(f){
+  let score = 18;
+
+  if (f.name) score += 6;
+  if (f.phone) score += 4;
+  if (f.region) score += 7;
+  if (f.landmark) score += 5;
+  if (f.category) score += 5;
+  if (f.industry) score += 6;
+  if (f.service) score += 6;
+  if (f.target) score += 5;
+  if (f.location) score += 5;
+  if (f.strength) score += 5;
+  if (f.parking) score += 3;
+
+  const descriptionAnalysis = getDescriptionAnalysis(f);
+  score += Math.round(descriptionAnalysis.score * 0.25) - 10;
+
+  return Math.max(8, Math.min(score, 100));
+}
     const keywordMap = {
   '고깃집': ['고기', '삼겹살', '소고기', '갈비', '회식'],
   '횟집': ['횟집', '회', '모둠회', '해산물', '술'],
@@ -1255,66 +1269,218 @@
       return toneMap[f.tone] || toneMap['신뢰형'];
     }
 
-    function getDescriptionGrade(totalScore, f){
-  const hasCore = !!(f.region && f.industry && f.service);
-  const hasDetail = !!(f.target && f.strength && f.location);
+function normalizeForCheck(text) {
+  return (text || '').replace(/\s+/g, '').toLowerCase();
+}
 
-  if (totalScore >= 80 && hasCore && hasDetail) {
+function getIndustryCheckWords(industry) {
+  const map = {
+    '고깃집': ['고기', '삼겹살', '목살', '소고기', '갈비', '한우'],
+    '횟집': ['회', '횟집', '광어', '우럭', '모둠회', '해산물', '전복'],
+    '이자카야': ['이자카야', '사시미', '꼬치', '하이볼', '나베'],
+    '술집': ['술집', '하이볼', '맥주', '소주', '안주'],
+    '한식집': ['한식', '백반', '정식', '찌개', '불고기'],
+    '중식집': ['중식', '짜장', '짬뽕', '탕수육', '마라'],
+    '일식집': ['일식', '초밥', '사시미', '라멘', '우동', '돈카츠'],
+    '양식집': ['양식', '파스타', '피자', '브런치', '스테이크'],
+    '치킨집': ['치킨', '후라이드', '양념치킨', '순살'],
+    '햄버거집': ['햄버거', '버거', '수제버거', '치즈버거'],
+    '분식집': ['분식', '떡볶이', '김밥', '순대', '튀김'],
+    '국밥집': ['국밥', '해장국', '수육', '돼지국밥'],
+    '족발집': ['족발', '막국수', '냉채족발'],
+    '보쌈집': ['보쌈', '수육', '굴보쌈'],
+    '카페': ['카페', '커피', '디저트', '브런치'],
+    '디저트카페': ['디저트', '케이크', '빙수', '마카롱'],
+    '베이커리': ['베이커리', '빵', '소금빵', '크로와상'],
+    '미용실': ['미용실', '커트', '펌', '염색'],
+    '피부관리': ['피부관리', '에스테틱', '관리'],
+    '네일샵': ['네일', '젤네일', '패디'],
+    '필라테스': ['필라테스', '체형교정', '운동'],
+    'PT샵': ['pt', '피티', '헬스'],
+    '요가': ['요가', '명상', '운동'],
+    '병원': ['병원', '진료', '치료'],
+    '치과': ['치과', '임플란트', '교정'],
+    '한의원': ['한의원', '침', '추나', '한약']
+  };
+  return map[industry] || [industry];
+}
+
+function getStrengthCheckWords(strength) {
+  const map = {
+    '가성비': ['가성비', '합리적', '부담없이'],
+    '분위기': ['분위기', '감성', '편안', '아늑'],
+    '전문성': ['전문', '노하우', '숙련', '정성'],
+    '양': ['푸짐', '양', '든든'],
+    '서비스': ['친절', '서비스', '응대'],
+    '접근성': ['가깝', '접근', '도보', '편리'],
+    '재방문율': ['재방문', '다시찾', '또찾'],
+    '빠른 응대': ['빠른', '신속', '즉시']
+  };
+  return map[strength] || [];
+}
+
+function countMatches(text, words) {
+  const normalized = normalizeForCheck(text);
+  let count = 0;
+  words.forEach(word => {
+    if (normalized.includes(normalizeForCheck(word))) count++;
+  });
+  return count;
+}
+
+function getSentenceStats(text) {
+  const rawSentences = (text || '')
+    .split(/[.!?\n]/)
+    .map(v => v.trim())
+    .filter(Boolean);
+
+  const lengths = rawSentences.map(v => v.length);
+  const avg = lengths.length
+    ? Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length)
+    : 0;
+
+  return {
+    count: rawSentences.length,
+    avgLength: avg
+  };
+}
+
+function getDescriptionAnalysis(f) {
+  const text = f.existingDescription || '';
+  const len = text.length;
+  const sentenceStats = getSentenceStats(text);
+
+  const regionHit = f.region ? normalizeForCheck(text).includes(normalizeForCheck(f.region.split(' ')[0])) : false;
+  const industryHits = countMatches(text, getIndustryCheckWords(f.industry));
+  const serviceHit = f.service ? normalizeForCheck(text).includes(normalizeForCheck(f.service)) : false;
+  const targetHit = f.target ? normalizeForCheck(text).includes(normalizeForCheck(f.target)) : false;
+  const strengthHits = countMatches(text, getStrengthCheckWords(f.strength));
+
+  const emotionalWords = ['정성', '손맛', '깊은맛', '기억에남는', '노력', '처음과같은마음', '맛보신', '자랑할만한'];
+  const emotionalHits = countMatches(text, emotionalWords);
+
+  let score = 0;
+
+  if (len === 0) score += 0;
+  else if (len < 80) score += 10;
+  else if (len < 180) score += 18;
+  else if (len < 350) score += 24;
+  else score += 28;
+
+  if (regionHit) score += 15;
+  if (industryHits >= 1) score += 15;
+  if (serviceHit) score += 14;
+  if (targetHit) score += 10;
+  if (strengthHits >= 1) score += 8;
+
+  if (sentenceStats.count >= 2) score += 5;
+  if (sentenceStats.avgLength > 0 && sentenceStats.avgLength <= 45) score += 8;
+  else if (sentenceStats.avgLength <= 70) score += 4;
+
+  if (emotionalHits >= 3 && !regionHit) score -= 6;
+  if (emotionalHits >= 3 && !serviceHit) score -= 6;
+  if (sentenceStats.avgLength > 85) score -= 8;
+
+  score = Math.max(0, Math.min(score, 100));
+
+  return {
+    score,
+    len,
+    regionHit,
+    industryHits,
+    serviceHit,
+    targetHit,
+    strengthHits,
+    emotionalHits,
+    sentenceCount: sentenceStats.count,
+    avgSentenceLength: sentenceStats.avgLength
+  };
+}
+
+function getDescriptionGradeFromAnalysis(analysis) {
+  if (analysis.score >= 80) {
     return {
       label: '우수',
       bg: '#ecfdf5',
       color: '#047857',
-      border: '#a7f3d0',
-      message: '기본 구조는 잘 잡혀 있습니다. 다만 상위 노출과 방문 전환을 높이려면 세부 키워드 확장과 문구 정교화가 더 필요합니다.'
+      border: '#a7f3d0'
     };
   }
-
-  if (totalScore >= 60) {
+  if (analysis.score >= 55) {
     return {
       label: '보통',
       bg: '#eff6ff',
       color: '#1d4ed8',
-      border: '#bfdbfe',
-      message: '기본 정보는 어느 정도 갖춰졌지만, 지역 키워드·타겟 고객·차별화 포인트 반영이 더 들어가야 상세설명 완성도가 올라갑니다.'
+      border: '#bfdbfe'
     };
   }
-
   return {
     label: '부족',
     bg: '#fff7ed',
     color: '#c2410c',
-    border: '#fed7aa',
-    message: '현재 상세설명 구조로는 검색 노출과 방문 전환을 만들기 어렵습니다. 지역·대표 서비스·강점 중심으로 다시 정리해야 합니다.'
+    border: '#fed7aa'
   };
 }
 
-function getDescriptionFixPoints(f, totalScore){
+function getDescriptionDiagnosisText(f, analysis) {
+  if (!f.existingDescription) {
+    return '현재 플레이스 상세설명란이 비어 있어 실제 문구 진단이 어렵습니다. 입력된 상세설명이 있어야 구조와 완성도를 제대로 판단할 수 있습니다.';
+  }
+
+  if (analysis.score >= 80) {
+    return '기본 구조는 잘 잡혀 있습니다. 대표 서비스와 업종 방향은 보이지만, 상위 노출과 클릭 전환을 높이려면 세부 키워드 확장과 문장 정교화가 더 필요합니다.';
+  }
+
+  if (analysis.score >= 55) {
+    return '감성 표현과 기본 소개는 있으나 지역·대표 메뉴·검색형 키워드 구조가 충분히 정리되지 않아 플레이스 최적화 문구로는 보완이 필요합니다.';
+  }
+
+  return '현재 문구는 감성 위주이거나 정보가 부족해 플레이스 최적화용 상세설명으로 보기 어렵습니다. 지역, 대표 서비스, 강점 중심으로 다시 정리해야 합니다.';
+}
+
+function getDescriptionFixPointsFromAnalysis(f, analysis) {
   const items = [];
 
-  if (!f.region) {
-    items.push('지역 정보가 없어 지역 기반 검색 키워드 반영이 약합니다.');
-  }
-  if (!f.service) {
-    items.push('대표 메뉴/서비스가 없어 검색 의도와 연결되는 핵심 문구가 부족합니다.');
-  }
-  if (!f.target) {
-    items.push('타겟 고객 설정이 없어 데이트·회식·가족 등 방문 상황 반영이 약합니다.');
-  }
-  if (!f.strength) {
-    items.push('매장 강점이 없어 경쟁 업체 대비 차별화 포인트가 약합니다.');
-  }
-  if (!f.location) {
-    items.push('매장 위치 특성이 없어 방문 동선과 접근성 설명이 약합니다.');
+  if (!f.existingDescription) {
+    return [
+      '현재 플레이스 상세설명란이 비어 있습니다. 먼저 실제 운영 중인 상세설명을 입력해야 합니다.',
+      '지역명, 대표 서비스, 업종 방향이 들어간 기본 문장 구조부터 만들어야 합니다.',
+      '상세설명 없이 운영하면 검색 노출과 클릭 전환에 불리할 수 있습니다.'
+    ];
   }
 
-  if (items.length === 0 && totalScore >= 80) {
+  if (!analysis.regionHit) {
+    items.push('문구 안에 지역 정보가 약해 지역 기반 검색 반영이 부족할 수 있습니다.');
+  }
+
+  if (analysis.industryHits === 0) {
+    items.push('업종 방향이 문구에서 선명하지 않아 사용자가 한눈에 매장 성격을 이해하기 어렵습니다.');
+  }
+
+  if (!analysis.serviceHit) {
+    items.push('대표 메뉴/서비스가 충분히 드러나지 않아 검색 의도와 연결되는 힘이 약합니다.');
+  }
+
+  if (!analysis.targetHit && f.target) {
+    items.push(`현재 설명에 ${f.target} 같은 방문 상황 표현이 약해 전환 포인트가 부족합니다.`);
+  }
+
+  if (analysis.strengthHits === 0 && f.strength) {
+    items.push(`매장 강점인 ${f.strength}이 문구에 선명하게 드러나지 않습니다.`);
+  }
+
+  if (analysis.avgSentenceLength > 85) {
+    items.push('문장이 길어 가독성이 떨어집니다. 짧은 문장 단위로 끊어 전달력을 높여야 합니다.');
+  }
+
+  if (analysis.emotionalHits >= 3 && analysis.serviceHit === false) {
+    items.push('감성 표현은 있으나 실제 검색형 정보보다 추상적 표현 비중이 높습니다.');
+  }
+
+  if (items.length === 0) {
     items.push('기본 구조는 좋습니다. 세부 키워드 확장으로 노출 범위를 넓히는 작업이 필요합니다.');
-    items.push('문구 톤을 업종과 상권 경쟁 상황에 맞게 더 정교하게 다듬으면 전환력이 올라갑니다.');
-    items.push('현재 설명은 무난하지만, 대표 서비스와 강점을 더 선명하게 드러내면 클릭률 개선 여지가 있습니다.');
-  }
-
-  if (items.length < 3) {
-    items.push('자동 생성 초안은 기본 골격이므로 실제 반영 전에는 업종과 지역 경쟁도에 맞게 다듬는 것이 좋습니다.');
+    items.push('대표 서비스와 강점을 문장 앞부분에 더 선명하게 드러내면 클릭률 개선 여지가 있습니다.');
+    items.push('업종과 상권 경쟁 상황에 맞게 문구 톤을 더 정교하게 다듬으면 전환력이 올라갑니다.');
   }
 
   return items.slice(0, 3);
@@ -1407,13 +1573,15 @@ function generateResult(){
   const consult = getConsultReasons(totalScore, missing.length);
   const review = getReviewReply(f);
 
-  const descriptionGrade = getDescriptionGrade(totalScore, f);
-  const descriptionFixPoints = getDescriptionFixPoints(f, totalScore);
+  const descriptionAnalysis = getDescriptionAnalysis(f);
+  const descriptionGrade = getDescriptionGradeFromAnalysis(descriptionAnalysis);
+  const descriptionDiagnosisText = getDescriptionDiagnosisText(f, descriptionAnalysis);
+  const descriptionFixPoints = getDescriptionFixPointsFromAnalysis(f, descriptionAnalysis);
 
   document.getElementById('miniScore').textContent = totalScore;
   animateCount(
     document.getElementById('scoreNumber'),
-    Number(document.getElementById('scoreNumber').textContent) || 43,
+    Number(document.getElementById('scoreNumber').textContent) || 29,
     totalScore,
     950
   );
@@ -1435,7 +1603,7 @@ function generateResult(){
   gradeEl.style.color = descriptionGrade.color;
   gradeEl.style.borderColor = descriptionGrade.border;
 
-  document.getElementById('descriptionDiagnosis').textContent = descriptionGrade.message;
+  document.getElementById('descriptionDiagnosis').textContent = descriptionDiagnosisText;
   renderList('descriptionFixList', descriptionFixPoints, '');
 
   const keywordWrap = document.getElementById('keywordOutput');
@@ -1513,6 +1681,20 @@ renderList('descriptionFixList', [
   '지역 정보가 들어가야 지역 기반 키워드 반영이 쉬워집니다.',
   '대표 서비스가 있어야 검색 의도와 연결되는 문구를 만들기 좋습니다.',
   '강점이 있어야 경쟁 업체 대비 차별화 포인트를 만들 수 있습니다.'
+], '');
+    document.getElementById('existingDescription').value = '';
+
+const gradeEl = document.getElementById('descriptionGrade');
+gradeEl.textContent = '보통';
+gradeEl.style.background = '#eef6ff';
+gradeEl.style.color = '#1d4ed8';
+gradeEl.style.borderColor = '#bfdbfe';
+
+document.getElementById('descriptionDiagnosis').textContent = '입력 후 결과를 생성하면 상세설명 진단이 표시됩니다.';
+renderList('descriptionFixList', [
+  '현재 플레이스 상세설명란이 비어 있으면 실제 진단이 어렵습니다.',
+  '지역명, 대표 서비스, 강점이 들어간 문구를 붙여넣어야 분석 정확도가 올라갑니다.',
+  '실제 문구 기준으로 검색형 구조와 감성형 표현 비중을 함께 진단합니다.'
 ], '');
 
     function setupReveal(){

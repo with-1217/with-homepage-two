@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>위드 자동 진단 시스템</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  background: #f5f7fa;
+  padding: 20px;
+}
+.container {
+  max-width: 700px;
+  margin: auto;
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+}
+h1 {font-size: 22px;}
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+}
+button {
+  background: #0070f3;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  background: #eee;
+  white-space: pre-line;
+}
+.cta {
+  margin-top: 15px;
+  background: #111;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>네이버 플레이스 자동 진단</h1>
+
+<input id="name" placeholder="업체명">
+<input id="region" placeholder="지역">
+
+<select id="industry">
+  <option>고기집</option>
+  <option>카페</option>
+  <option>미용실</option>
+</select>
+
+<select id="strength">
+  <option>가성비</option>
+  <option>분위기</option>
+  <option>서비스</option>
+</select>
+
+<button onclick="generate()">최적화 결과 보기</button>
+
+<div class="result" id="result"></div>
+
+<button class="cta" onclick="alert('카카오톡 연결 예정')">
+👉 위드 상담 문의하기
+</button>
+
+</div>
+
+<script>
+function generate() {
+
+let name = document.getElementById('name').value;
+let region = document.getElementById('region').value;
+let industry = document.getElementById('industry').value;
+let strength = document.getElementById('strength').value;
+
+let score = 40;
+if(name) score += 20;
+if(region) score += 20;
+
+let text = `
+🔥 최적화 점수: ${score}점
+
+📌 추천 키워드:
+${region} ${industry}
+${region} ${strength} ${industry}
+
+📄 상세설명:
+${region}에서 ${industry}를 찾는 고객들에게 적합한 ${name}입니다.
+${strength}을 강점으로 방문 만족도가 높은 매장입니다.
+
+⚠️ 부족한 부분:
+- 상세설명 키워드 부족
+- 지역 노출 약함
+
+👉 지금 수정하지 않으면 계속 노출에서 밀립니다
+`;
+
+document.getElementById('result').innerText = text;
+}
+</script>
+
+</body>
+</html>

@@ -763,11 +763,46 @@
           <div class="panel reveal delay-1">
             <h3>플레이스 진단 결과</h3>
 
-            <div class="output-card">
-              <h4>상세설명</h4>
-              <p id="descriptionOutput">입력 후 결과를 생성하면 이곳에 자동 상세설명이 표시됩니다.</p>
-            </div>
+        <div class="output-card">
+        <h4>상세설명 진단</h4>
 
+    <div style="margin-bottom:12px;">
+    <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:6px;">현재 상태</div>
+    <div id="descriptionGrade" style="
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:900;
+      background:#eef6ff;
+      color:#0f172a;
+      border:1px solid #dbe8f2;
+    ">
+      보통
+    </div>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:6px;">한줄 진단</div>
+    <p id="descriptionDiagnosis" style="margin:0;color:#334155;line-height:1.8;">
+      입력 후 결과를 생성하면 상세설명 진단이 표시됩니다.
+    </p>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:8px;">보완 포인트</div>
+    <div id="descriptionFixList" class="list"></div>
+  </div>
+
+  <div>
+    <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:6px;">최적화 초안</div>
+    <p id="descriptionOutput" style="margin:0;color:#334155;line-height:1.85;">
+      입력 후 결과를 생성하면 이곳에 자동 상세설명이 표시됩니다.
+    </p>
+  </div>
+</div>
             <div class="output-card">
               <h4>길찾기 문구</h4>
               <p id="directionOutput">입력 후 결과를 생성하면 이곳에 길찾기 문구가 표시됩니다.</p>
@@ -1220,6 +1255,71 @@
       return toneMap[f.tone] || toneMap['신뢰형'];
     }
 
+    function getDescriptionGrade(totalScore, f){
+  const hasCore = !!(f.region && f.industry && f.service);
+  const hasDetail = !!(f.target && f.strength && f.location);
+
+  if (totalScore >= 80 && hasCore && hasDetail) {
+    return {
+      label: '우수',
+      bg: '#ecfdf5',
+      color: '#047857',
+      border: '#a7f3d0',
+      message: '기본 구조는 잘 잡혀 있습니다. 다만 상위 노출과 방문 전환을 높이려면 세부 키워드 확장과 문구 정교화가 더 필요합니다.'
+    };
+  }
+
+  if (totalScore >= 60) {
+    return {
+      label: '보통',
+      bg: '#eff6ff',
+      color: '#1d4ed8',
+      border: '#bfdbfe',
+      message: '기본 정보는 어느 정도 갖춰졌지만, 지역 키워드·타겟 고객·차별화 포인트 반영이 더 들어가야 상세설명 완성도가 올라갑니다.'
+    };
+  }
+
+  return {
+    label: '부족',
+    bg: '#fff7ed',
+    color: '#c2410c',
+    border: '#fed7aa',
+    message: '현재 상세설명 구조로는 검색 노출과 방문 전환을 만들기 어렵습니다. 지역·대표 서비스·강점 중심으로 다시 정리해야 합니다.'
+  };
+}
+
+function getDescriptionFixPoints(f, totalScore){
+  const items = [];
+
+  if (!f.region) {
+    items.push('지역 정보가 없어 지역 기반 검색 키워드 반영이 약합니다.');
+  }
+  if (!f.service) {
+    items.push('대표 메뉴/서비스가 없어 검색 의도와 연결되는 핵심 문구가 부족합니다.');
+  }
+  if (!f.target) {
+    items.push('타겟 고객 설정이 없어 데이트·회식·가족 등 방문 상황 반영이 약합니다.');
+  }
+  if (!f.strength) {
+    items.push('매장 강점이 없어 경쟁 업체 대비 차별화 포인트가 약합니다.');
+  }
+  if (!f.location) {
+    items.push('매장 위치 특성이 없어 방문 동선과 접근성 설명이 약합니다.');
+  }
+
+  if (items.length === 0 && totalScore >= 80) {
+    items.push('기본 구조는 좋습니다. 세부 키워드 확장으로 노출 범위를 넓히는 작업이 필요합니다.');
+    items.push('문구 톤을 업종과 상권 경쟁 상황에 맞게 더 정교하게 다듬으면 전환력이 올라갑니다.');
+    items.push('현재 설명은 무난하지만, 대표 서비스와 강점을 더 선명하게 드러내면 클릭률 개선 여지가 있습니다.');
+  }
+
+  if (items.length < 3) {
+    items.push('자동 생성 초안은 기본 골격이므로 실제 반영 전에는 업종과 지역 경쟁도에 맞게 다듬는 것이 좋습니다.');
+  }
+
+  return items.slice(0, 3);
+}
+
     function getDirections(f){
       const landmark = f.landmark || '가까운 역 또는 랜드마크';
       const name = f.name || '업체';
@@ -1296,44 +1396,62 @@
       });
     }
 
-    function generateResult(){
-      const f = getForm();
-      const score = calcScore(f);
-      const keywords = getKeywords(f);
-      const description = getDescription(f);
-      const directions = getDirections(f);
-      const missing = getMissing(f);
-      const consult = getConsultReasons(score, missing.length);
-      const review = getReviewReply(f);
+function generateResult(){
+  const f = getForm();
 
-      document.getElementById('miniScore').textContent = score;
-      animateCount(document.getElementById('scoreNumber'), Number(document.getElementById('scoreNumber').textContent) || 43, score, 950);
+  const totalScore = calcScore(f);
+  const keywords = getKeywords(f);
+  const description = getDescription(f);
+  const directions = getDirections(f);
+  const missing = getMissing(f);
+  const consult = getConsultReasons(totalScore, missing.length);
+  const review = getReviewReply(f);
 
-      const scoreMessage = score >= 80
-        ? '기본 정보는 잘 잡혀 있습니다. 다만 실제 노출과 전환을 높이려면 문구 정교화와 반영 작업이 더 필요합니다.'
-        : score >= 60
-        ? '기본 정보는 어느 정도 있지만 검색 의도와 방문 전환 관점에서 보완이 필요합니다.'
-        : '노출과 방문 전환에 불리한 상태입니다. 자동 생성 초안만으로 끝내지 말고 실제 세팅까지 연결해야 합니다.';
-      document.getElementById('scoreMessage').textContent = scoreMessage;
+  const descriptionGrade = getDescriptionGrade(totalScore, f);
+  const descriptionFixPoints = getDescriptionFixPoints(f, totalScore);
 
-      document.getElementById('descriptionOutput').textContent = description;
-      document.getElementById('directionOutput').textContent = directions;
-      document.getElementById('reviewOutput').textContent = review;
+  document.getElementById('miniScore').textContent = totalScore;
+  animateCount(
+    document.getElementById('scoreNumber'),
+    Number(document.getElementById('scoreNumber').textContent) || 43,
+    totalScore,
+    950
+  );
 
-      const keywordWrap = document.getElementById('keywordOutput');
-      keywordWrap.innerHTML = '';
-      keywords.forEach(item => {
-        const tag = document.createElement('span');
-        tag.className = 'keyword';
-        tag.textContent = item;
-        keywordWrap.appendChild(tag);
-      });
+  const scoreMessage = totalScore >= 80
+    ? '기본 정보는 잘 잡혀 있습니다. 다만 실제 노출과 전환을 높이려면 문구 정교화와 반영 작업이 더 필요합니다.'
+    : totalScore >= 60
+    ? '기본 정보는 어느 정도 있지만 검색 의도와 방문 전환 관점에서 보완이 필요합니다.'
+    : '노출과 방문 전환에 불리한 상태입니다. 자동 생성 초안만으로 끝내지 말고 실제 세팅까지 연결해야 합니다.';
+  document.getElementById('scoreMessage').textContent = scoreMessage;
 
-      renderList('missingList', missing, '');
-      renderList('consultList', consult, 'blue');
+  document.getElementById('descriptionOutput').textContent = description;
+  document.getElementById('directionOutput').textContent = directions;
+  document.getElementById('reviewOutput').textContent = review;
 
-      document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
-    }
+  const gradeEl = document.getElementById('descriptionGrade');
+  gradeEl.textContent = descriptionGrade.label;
+  gradeEl.style.background = descriptionGrade.bg;
+  gradeEl.style.color = descriptionGrade.color;
+  gradeEl.style.borderColor = descriptionGrade.border;
+
+  document.getElementById('descriptionDiagnosis').textContent = descriptionGrade.message;
+  renderList('descriptionFixList', descriptionFixPoints, '');
+
+  const keywordWrap = document.getElementById('keywordOutput');
+  keywordWrap.innerHTML = '';
+  keywords.forEach(item => {
+    const tag = document.createElement('span');
+    tag.className = 'keyword';
+    tag.textContent = item;
+    keywordWrap.appendChild(tag);
+  });
+
+  renderList('missingList', missing, '');
+  renderList('consultList', consult, 'blue');
+
+  document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
+}
 
     function resetForm(){
       document.getElementById('name').value = '';
@@ -1383,6 +1501,19 @@
         '위드가 직접 세팅하면 사장님은 복잡한 수정 과정을 줄일 수 있습니다.'
       ], 'blue');
     }
+
+  const gradeEl = document.getElementById('descriptionGrade');
+gradeEl.textContent = '보통';
+gradeEl.style.background = '#eef6ff';
+gradeEl.style.color = '#1d4ed8';
+gradeEl.style.borderColor = '#bfdbfe';
+
+document.getElementById('descriptionDiagnosis').textContent = '입력 후 결과를 생성하면 상세설명 진단이 표시됩니다.';
+renderList('descriptionFixList', [
+  '지역 정보가 들어가야 지역 기반 키워드 반영이 쉬워집니다.',
+  '대표 서비스가 있어야 검색 의도와 연결되는 문구를 만들기 좋습니다.',
+  '강점이 있어야 경쟁 업체 대비 차별화 포인트를 만들 수 있습니다.'
+], '');
 
     function setupReveal(){
       const elements = document.querySelectorAll('.reveal');

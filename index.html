@@ -399,10 +399,6 @@
       background:var(--blue);
       box-shadow:0 0 0 6px rgba(46,168,255,.12);
     }
-    .dot.green{
-      background:var(--ok);
-      box-shadow:0 0 0 6px rgba(23,195,123,.12);
-    }
 
     .output-card{
       background:#f8fbfe;
@@ -598,7 +594,12 @@
         </div>
 
         <div class="option-group">
-          <h4>업종 선택</h4>
+          <h4>업종 카테고리</h4>
+          <div class="chips" id="categoryChips"></div>
+        </div>
+
+        <div class="option-group">
+          <h4>세부 업종</h4>
           <div class="chips" id="industryChips"></div>
         </div>
 
@@ -708,7 +709,7 @@
             <h3>상담이 필요한 이유</h3>
             <div id="consultList" class="list">
               <div class="list-item"><span class="dot blue"></span><span>자동 생성 초안만으로는 실제 반영용 세팅 문구가 약할 수 있습니다.</span></div>
-              <div class="list-item"><span class="dot blue"></span><span>업종과 상권에 맞게 미세 조정해야 검색 노출과 방문 전환이 살아납니다.</span></div>
+              <div class="list-item"><span class="dot blue"></span><span>업종과 상권에 맞게 미세 조정해야 검색 노출과 전환이 살아납니다.</span></div>
               <div class="list-item"><span class="dot blue"></span><span>위드가 직접 세팅하면 사장님은 복잡한 수정 과정을 줄일 수 있습니다.</span></div>
             </div>
           </div>
@@ -773,18 +774,59 @@
   </footer>
 
   <script>
-    const industries = ['고기집','카페','미용실','피부관리','병원','필라테스','네일샵','술집','기타'];
+    const categoryMap = {
+      '음식점': [
+        '고깃집','횟집','이자카야','술집','한식집','중식집','일식집','양식집',
+        '치킨집','햄버거집','분식집','국밥집','족발집','보쌈집'
+      ],
+      '카페·디저트': [
+        '카페','디저트카페','베이커리'
+      ],
+      '뷰티': [
+        '미용실','피부관리','네일샵'
+      ],
+      '헬스': [
+        '필라테스','PT샵','요가'
+      ],
+      '의료': [
+        '병원','치과','한의원'
+      ],
+      '기타': [
+        '기타'
+      ]
+    };
+
     const servicesMap = {
-      '고기집':['삼겹살','목살','소고기','갈비','점심특선'],
-      '카페':['커피','디저트','브런치','베이커리','수제청'],
+      '고깃집':['삼겹살','목살','소고기','갈비','점심특선'],
+      '횟집':['모둠회','광어회','우럭회','대방어','해산물'],
+      '이자카야':['사시미','꼬치구이','나베','하이볼','일품요리'],
+      '술집':['하이볼','맥주','소주','안주맛집','혼술'],
+      '한식집':['백반','찌개','불고기','비빔밥','정식'],
+      '중식집':['짜장면','짬뽕','탕수육','마라요리','코스요리'],
+      '일식집':['초밥','사시미','돈카츠','라멘','우동'],
+      '양식집':['파스타','스테이크','리조또','피자','브런치'],
+      '치킨집':['후라이드','양념치킨','간장치킨','순살치킨','맥주'],
+      '햄버거집':['수제버거','치즈버거','치킨버거','감자튀김','세트메뉴'],
+      '분식집':['떡볶이','순대','튀김','김밥','라볶이'],
+      '국밥집':['돼지국밥','순대국밥','소머리국밥','해장국','수육'],
+      '족발집':['족발','냉채족발','막국수','세트메뉴','수육'],
+      '보쌈집':['보쌈','굴보쌈','막국수','수육','정식'],
+      '카페':['커피','브런치','디저트','수제청','시그니처메뉴'],
+      '디저트카페':['케이크','와플','빙수','마카롱','쿠키'],
+      '베이커리':['식빵','소금빵','크로와상','샌드위치','케이크'],
       '미용실':['커트','펌','염색','클리닉','두피관리'],
       '피부관리':['여드름관리','윤곽관리','수분관리','웨딩관리','바디관리'],
-      '병원':['통증치료','검진','상담진료','도수치료','피부시술'],
-      '필라테스':['개인레슨','그룹레슨','체형교정','재활운동','다이어트'],
       '네일샵':['젤네일','패디','연장','케어','드릴오프'],
-      '술집':['하이볼','이자카야','안주맛집','와인','혼술'],
+      '필라테스':['개인레슨','그룹레슨','체형교정','재활운동','다이어트'],
+      'PT샵':['개인PT','그룹PT','체형교정','근력증가','다이어트'],
+      '요가':['개인레슨','그룹수업','체형교정','명상','다이어트'],
+      '병원':['통증치료','검진','상담진료','도수치료','피부시술'],
+      '치과':['임플란트','교정','스케일링','충치치료','심미치료'],
+      '한의원':['추나요법','침치료','한약','다이어트한약','통증관리'],
       '기타':['대표 서비스 1','대표 서비스 2','대표 서비스 3']
     };
+
+    const categories = Object.keys(categoryMap);
     const targets = ['혼밥','데이트','가족','회식','직장인','관광객','여성고객','20~30대','40~50대'];
     const locations = ['역세권','골목상권','대로변','오피스상권','주택상권','대형상가 내부'];
     const strengths = ['가성비','분위기','전문성','양','서비스','접근성','재방문율','빠른 응대'];
@@ -792,7 +834,8 @@
     const tones = ['신뢰형','친근형','고급형','직관형'];
 
     const state = {
-      industry:'고기집',
+      category:'음식점',
+      industry:'고깃집',
       service:'삼겹살',
       target:'데이트',
       location:'역세권',
@@ -820,9 +863,16 @@
     }
 
     function renderAllChips(){
-      createChips('industryChips', industries, 'industry', (item) => {
-        state.service = servicesMap[item][0];
+      createChips('categoryChips', categories, 'category', (selectedCategory) => {
+        const firstIndustry = categoryMap[selectedCategory][0];
+        state.industry = firstIndustry;
+        state.service = servicesMap[firstIndustry][0];
       });
+
+      createChips('industryChips', categoryMap[state.category], 'industry', (selectedIndustry) => {
+        state.service = servicesMap[selectedIndustry][0];
+      });
+
       createChips('serviceChips', servicesMap[state.industry], 'service');
       createChips('targetChips', targets, 'target');
       createChips('locationChips', locations, 'location');
@@ -837,6 +887,7 @@
         phone: document.getElementById('phone').value.trim(),
         region: document.getElementById('region').value.trim(),
         landmark: document.getElementById('landmark').value.trim(),
+        category: state.category,
         industry: state.industry,
         service: state.service,
         target: state.target,
@@ -853,7 +904,8 @@
       if (f.phone) score += 5;
       if (f.region) score += 7;
       if (f.landmark) score += 6;
-      if (f.industry) score += 8;
+      if (f.category) score += 5;
+      if (f.industry) score += 7;
       if (f.service) score += 6;
       if (f.target) score += 6;
       if (f.location) score += 6;
@@ -1017,7 +1069,8 @@
       document.getElementById('region').value = '';
       document.getElementById('landmark').value = '';
 
-      state.industry = '고기집';
+      state.category = '음식점';
+      state.industry = '고깃집';
       state.service = '삼겹살';
       state.target = '데이트';
       state.location = '역세권';

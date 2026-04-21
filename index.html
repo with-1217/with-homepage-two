@@ -1,1336 +1,188 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WITH | 네이버 플레이스 자동 진단 시스템</title>
-  <meta name="description" content="업체 정보 또는 네이버 지도 링크만 입력하면 네이버 플레이스 최적화 방향을 자동 진단해주는 위드 자동 진단 시스템" />
-  <style>
-    :root{
-      --white:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --muted-soft:#8ca0b8;
-      --blue:#2ea8ff;
-      --blue-deep:#0e7fd4;
-      --cyan:#00cfff;
-      --sky:#64e6ff;
-      --warn:#ffbe55;
-      --ok:#16c47f;
-      --danger:#ff6b6b;
-      --line:rgba(255,255,255,.08);
-      --light-bg:#eef4fb;
-      --card:#ffffff;
-      --shadow:0 20px 60px rgba(5, 13, 28, .14);
-      --shadow-lg:0 30px 80px rgba(0,0,0,.22);
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WITH 자동 진단</title>
 
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;
-      color:var(--white);
-      background:
-        radial-gradient(circle at 15% 10%, rgba(46,168,255,.18), transparent 22%),
-        radial-gradient(circle at 85% 6%, rgba(100,230,255,.14), transparent 18%),
-        radial-gradient(circle at 50% 30%, rgba(34,211,238,.06), transparent 24%),
-        linear-gradient(180deg, #06101b 0%, #091420 28%, #0b1522 40%, #eef4fb 40%, #eef4fb 100%);
-      overflow-x:hidden;
-    }
-
-    a{text-decoration:none;color:inherit}
-    button,input{font:inherit}
-    img{max-width:100%;display:block}
-
-    .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
-    .section{padding:100px 0}
-
-    .floating-glow{
-      position:fixed;
-      inset:auto auto 10% -140px;
-      width:340px;height:340px;border-radius:50%;
-      background:radial-gradient(circle, rgba(46,168,255,.14), transparent 68%);
-      pointer-events:none;filter:blur(10px);z-index:0;
-      animation:floatGlow 10s ease-in-out infinite;
-    }
-    .floating-glow.two{
-      inset:14% -120px auto auto;
-      width:300px;height:300px;
-      background:radial-gradient(circle, rgba(100,230,255,.12), transparent 68%);
-      animation-duration:14s;
-    }
-    @keyframes floatGlow{
-      0%,100%{transform:translateY(0)}
-      50%{transform:translateY(-18px)}
-    }
-
-    .nav{
-      position:sticky;top:0;z-index:40;
-      backdrop-filter:blur(16px);
-      background:rgba(6,16,27,.62);
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .nav-inner{
-      height:80px;display:flex;align-items:center;justify-content:space-between;gap:20px;
-    }
-    .brand{
-      display:flex;align-items:center;gap:12px;font-weight:900;font-size:22px;letter-spacing:-.03em;
-    }
-    .brand-logo{
-      width:42px;height:42px;border-radius:14px;
-      background:linear-gradient(135deg,var(--blue),var(--cyan));
-      display:grid;place-items:center;color:#fff;font-size:18px;
-      box-shadow:0 14px 28px rgba(46,168,255,.32);
-    }
-    .nav-links{
-      display:flex;gap:28px;color:rgba(255,255,255,.72);font-size:15px;font-weight:600;
-    }
-    .nav-links a:hover{color:#fff}
-    .nav-cta{
-      padding:14px 18px;border-radius:16px;
-      background:linear-gradient(135deg,var(--blue),var(--blue-deep));
-      font-weight:800;
-      box-shadow:0 12px 30px rgba(46,168,255,.24);
-    }
-
-    .hero{
-      position:relative;z-index:1;
-      padding:76px 0 104px;
-    }
-    .hero-grid{
-      display:grid;grid-template-columns:1.04fr .96fr;
-      gap:34px;align-items:start;
-    }
-
-    .eyebrow{
-      display:inline-flex;align-items:center;gap:10px;
-      padding:10px 15px;border-radius:999px;
-      background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.08);
-      color:#d8ecff;font-size:14px;font-weight:800;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
-    }
-    .eyebrow-dot{
-      width:8px;height:8px;border-radius:50%;
-      background:linear-gradient(135deg,var(--sky),var(--blue));
-      box-shadow:0 0 16px rgba(100,230,255,.8);
-    }
-
-    .hero h1{
-      margin:18px 0 0;
-      font-size:68px;line-height:1.02;letter-spacing:-.05em;
-      max-width:780px;
-    }
-    .hero h1 .grad{
-      background:linear-gradient(135deg,#ffffff 10%, #96dbff 48%, #69f0ff 88%);
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-    }
-    .hero-desc{
-      margin:24px 0 0;
-      max-width:720px;color:rgba(255,255,255,.76);
-      font-size:19px;line-height:1.85;
-    }
-
-    .hero-actions{
-      display:flex;gap:14px;flex-wrap:wrap;margin-top:30px;
-    }
-    .btn{
-      border:none;cursor:pointer;
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;
-      padding:16px 22px;border-radius:18px;
-      font-size:15px;font-weight:900;letter-spacing:-.01em;
-      transition:transform .22s ease, box-shadow .22s ease, background .22s ease;
-    }
-    .btn:hover{transform:translateY(-2px)}
-    .btn-primary{
-      color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue-deep));
-      box-shadow:0 14px 34px rgba(46,168,255,.3);
-    }
-    .btn-secondary{
-      color:#fff;background:rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.1);
-    }
-    .btn-light{
-      background:#eff6fc;color:#0f172a;border:1px solid #d9e7f1;
-    }
-    .btn-dark{
-      background:#0f172a;color:#fff;
-    }
-    .btn-outline-light{
-      color:#fff;background:transparent;border:1px solid rgba(255,255,255,.16);
-    }
-
-    .hero-stats{
-      display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:14px;margin-top:28px;
-    }
-    .hero-stat{
-      padding:20px;border-radius:24px;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.08);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
-      backdrop-filter:blur(10px);
-    }
-    .hero-stat strong{display:block;font-size:18px;margin-bottom:7px}
-    .hero-stat p{margin:0;color:rgba(255,255,255,.7);font-size:14px;line-height:1.7}
-
-    .glass-card{
-      position:relative;background:rgba(255,255,255,.96);color:#0f172a;
-      border-radius:34px;padding:28px;box-shadow:var(--shadow-lg);overflow:hidden;
-    }
-    .glass-card::before{
-      content:"";
-      position:absolute;inset:auto -60px -60px auto;
-      width:220px;height:220px;border-radius:50%;
-      background:radial-gradient(circle, rgba(46,168,255,.16), transparent 65%);
-      pointer-events:none;
-    }
-
-    .card-header{
-      display:flex;align-items:center;justify-content:space-between;gap:18px;
-      margin-bottom:18px;
-    }
-    .card-label{
-      color:var(--blue);font-size:14px;font-weight:900;display:block;margin-bottom:6px;
-    }
-    .card-title{
-      margin:0;font-size:32px;line-height:1.12;letter-spacing:-.04em;
-    }
-
-    .score-bubble{
-      width:112px;height:112px;border-radius:30px;
-      background:linear-gradient(135deg,#eff9ff,#f8fcff);
-      border:1px solid #d9eefa;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
-    }
-    .score-bubble strong{font-size:38px;line-height:1;margin-bottom:3px}
-    .score-bubble span{color:#64748b;font-size:12px;font-weight:800}
-
-    .link-box{
-      margin-bottom:18px;padding:18px;border-radius:22px;
-      background:#f7fbff;border:1px solid #dcebF7;
-    }
-    .link-grid{
-      display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;
-    }
-
-    .auto-summary{
-      margin-top:14px;
-      padding:16px;border-radius:18px;
-      background:#ffffff;border:1px solid #dbe8f2;
-      display:none;
-    }
-    .auto-summary.show{display:block}
-    .auto-summary h5{
-      margin:0 0 10px;font-size:14px;font-weight:900;color:#0f172a;
-    }
-    .summary-grid{
-      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
-    }
-    .summary-item{
-      padding:12px 14px;border-radius:16px;background:#f8fbfe;border:1px solid #e3edf5;
-    }
-    .summary-item small{
-      display:block;color:#64748b;font-size:12px;font-weight:800;margin-bottom:4px;
-    }
-    .summary-item strong{
-      color:#0f172a;font-size:14px;line-height:1.5;
-    }
-
-    .status-text{
-      margin-top:10px;font-size:13px;font-weight:800;color:#64748b;
-    }
-    .status-success{color:#0f9d58 !important;}
-    .status-warn{color:#d97706 !important;}
-
-    .form-grid{
-      display:grid;grid-template-columns:1fr 1fr;gap:14px;
-    }
-    .field{display:flex;flex-direction:column;gap:8px}
-    .field label{font-size:14px;font-weight:900;color:#334155}
-    .input{
-      width:100%;border:none;outline:none;
-      background:#f8fbfe;border:1px solid #dbe7f1;color:#0f172a;
-      padding:16px;border-radius:18px;transition:.2s ease;
-    }
-    .input:focus{
-      background:#fff;border-color:#7fd3ff;
-      box-shadow:0 0 0 4px rgba(46,168,255,.12);
-    }
-
-    .option-group{margin-top:18px}
-    .option-group h4{
-      margin:0 0 10px;color:#334155;font-size:14px;font-weight:900;
-    }
-    .chips{display:flex;flex-wrap:wrap;gap:10px}
-    .chip{
-      border:none;cursor:pointer;
-      padding:12px 16px;border-radius:999px;
-      background:#f5f9fc;border:1px solid #dbe8f2;
-      color:#334155;font-weight:900;font-size:14px;transition:all .18s ease;
-    }
-    .chip:hover{transform:translateY(-1px)}
-    .chip.active{
-      color:#fff;border-color:transparent;
-      background:linear-gradient(135deg,var(--blue),var(--blue-deep));
-      box-shadow:0 10px 24px rgba(46,168,255,.22);
-    }
-
-    .card-actions{
-      display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px;
-    }
-
-    .micro-note{
-      margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;
-      padding:14px 16px;border-radius:18px;
-      background:#f8fbfe;border:1px solid #e2edf5;
-      color:#516273;font-size:13px;font-weight:800;
-    }
-
-    .after-hero{
-      background:var(--light-bg);color:#0f172a;position:relative;z-index:1;
-    }
-    .section-head{
-      max-width:820px;margin-bottom:34px;
-    }
-    .section-head .mini{
-      display:inline-block;margin-bottom:10px;color:var(--blue);font-size:14px;font-weight:900;
-    }
-    .section-head h2{
-      margin:0;font-size:48px;line-height:1.12;letter-spacing:-.05em;
-    }
-    .section-head p{
-      margin:16px 0 0;color:var(--muted);font-size:18px;line-height:1.85;
-    }
-
-    .feature-grid{
-      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;
-    }
-    .feature-card{
-      background:var(--card);border-radius:28px;padding:26px;
-      border:1px solid #e4edf5;box-shadow:var(--shadow);
-      transition:transform .22s ease, box-shadow .22s ease;
-    }
-    .feature-card:hover{
-      transform:translateY(-6px);box-shadow:0 26px 60px rgba(7,17,31,.14);
-    }
-    .feature-icon{
-      width:56px;height:56px;border-radius:20px;display:grid;place-items:center;
-      background:linear-gradient(135deg,#eaf8ff,#dbf3ff);
-      color:var(--blue);font-size:22px;font-weight:900;margin-bottom:16px;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
-    }
-    .feature-card h3{
-      margin:0 0 10px;font-size:22px;line-height:1.2;letter-spacing:-.03em;
-    }
-    .feature-card p{
-      margin:0;color:var(--muted);font-size:15px;line-height:1.75;
-    }
-
-    .result-grid{
-      display:grid;grid-template-columns:.9fr 1.1fr;gap:24px;margin-top:40px;
-    }
-
-    .score-panel{
-      background:linear-gradient(135deg,#07111f,#12253e 65%, #15395f);
-      color:#fff;border-radius:30px;padding:28px;box-shadow:0 24px 60px rgba(6,14,28,.25);
-    }
-    .score-panel-top{
-      display:flex;align-items:center;justify-content:space-between;gap:16px;
-    }
-    .score-label{
-      color:#9cc2e8;font-size:14px;font-weight:900;
-    }
-    .score-value{
-      margin-top:10px;font-size:84px;line-height:1;font-weight:900;letter-spacing:-.05em;
-    }
-    .score-panel p{
-      margin:18px 0 0;color:rgba(255,255,255,.74);line-height:1.85;
-    }
-
-    .panel{
-      background:#fff;border-radius:28px;padding:24px;border:1px solid #e3edf5;box-shadow:var(--shadow);
-    }
-    .panel h3{
-      margin:0 0 14px;font-size:24px;line-height:1.2;letter-spacing:-.03em;
-    }
-
-    .list{
-      display:flex;flex-direction:column;gap:12px;
-    }
-    .list-item{
-      display:flex;gap:12px;align-items:flex-start;
-      padding:15px 16px;border-radius:18px;
-      background:#f8fbfe;border:1px solid #e3edf5;
-      color:#334155;line-height:1.72;
-    }
-    .dot{
-      width:10px;height:10px;min-width:10px;border-radius:50%;margin-top:8px;
-      background:var(--warn);box-shadow:0 0 0 6px rgba(255,190,85,.12);
-    }
-    .dot.blue{
-      background:var(--blue);box-shadow:0 0 0 6px rgba(46,168,255,.12);
-    }
-
-    .output-card{
-      background:#f8fbfe;border:1px solid #e1edf5;border-radius:22px;
-      padding:20px;margin-bottom:14px;transition:transform .2s ease;
-    }
-    .output-card:hover{transform:translateY(-2px)}
-    .output-card h4{
-      margin:0 0 10px;font-size:18px;letter-spacing:-.02em;
-    }
-    .output-card p{
-      margin:0;color:#334155;line-height:1.85;
-    }
-
-    .keywords{
-      display:flex;flex-wrap:wrap;gap:10px;
-    }
-    .keyword{
-      padding:10px 14px;border-radius:999px;background:#fff;border:1px solid #dbe8f2;
-      font-size:13px;font-weight:900;color:#0f172a;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
-    }
-
-    .cta-banner{
-      margin-top:28px;
-      background:
-        radial-gradient(circle at 85% 15%, rgba(100,230,255,.12), transparent 16%),
-        linear-gradient(135deg,#07111f,#10233d 62%, #133d67);
-      color:#fff;border-radius:34px;padding:36px;
-      box-shadow:0 24px 64px rgba(7,17,31,.22);
-      position:relative;overflow:hidden;
-    }
-    .cta-banner::after{
-      content:"";
-      position:absolute;right:-40px;bottom:-40px;
-      width:200px;height:200px;border-radius:50%;
-      background:radial-gradient(circle, rgba(46,168,255,.16), transparent 65%);
-      pointer-events:none;
-    }
-    .cta-banner small{color:#8ed8ff;font-weight:900}
-    .cta-banner h3{
-      margin:10px 0 14px;font-size:38px;line-height:1.08;letter-spacing:-.05em;max-width:760px;
-    }
-    .cta-banner p{
-      margin:0;max-width:920px;color:rgba(255,255,255,.74);font-size:17px;line-height:1.9;
-    }
-    .cta-actions{
-      display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;
-    }
-
-    .footer{
-      padding:46px 0 70px;background:var(--light-bg);color:#64748b;border-top:1px solid #dde8f0;
-    }
-    .footer-inner{
-      display:flex;align-items:center;justify-content:space-between;gap:22px;
-    }
-    .footer strong{color:#0f172a}
-
-    .reveal{
-      opacity:0;transform:translateY(40px);
-      transition:opacity .8s ease, transform .8s ease;
-      will-change:transform, opacity;
-    }
-    .reveal.visible{
-      opacity:1;transform:translateY(0);
-    }
-    .delay-1{transition-delay:.08s}
-    .delay-2{transition-delay:.16s}
-    .delay-3{transition-delay:.24s}
-
-    @media (max-width:1150px){
-      .hero-grid,.result-grid{grid-template-columns:1fr}
-      .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .hero h1{font-size:54px}
-    }
-    @media (max-width:760px){
-      .wrap{padding:0 18px}
-      .nav-links{display:none}
-      .hero{padding:54px 0 74px}
-      .hero h1{font-size:40px}
-      .hero-desc{font-size:16px}
-      .hero-stats,.feature-grid,.form-grid,.card-actions,.summary-grid{grid-template-columns:1fr}
-      .link-grid{grid-template-columns:1fr}
-      .section{padding:74px 0}
-      .section-head h2{font-size:34px}
-      .cta-banner h3{font-size:28px}
-      .score-value{font-size:60px}
-      .glass-card,.panel,.feature-card,.cta-banner,.score-panel{border-radius:24px}
-      .footer-inner,.micro-note{flex-direction:column;align-items:flex-start}
-    }
-  </style>
+<style>
+body{margin:0;font-family:sans-serif;background:#0b1522;color:#fff}
+.wrap{max-width:1100px;margin:0 auto;padding:40px}
+.card{background:#fff;color:#000;border-radius:20px;padding:20px;margin-bottom:20px}
+.input{width:100%;padding:14px;border-radius:10px;border:1px solid #ddd}
+.btn{padding:14px;border:none;border-radius:10px;background:#2ea8ff;color:#fff;font-weight:bold;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{padding:10px 14px;border-radius:999px;background:#eee;cursor:pointer}
+.chip.active{background:#2ea8ff;color:#fff}
+.summary{background:#f3f8ff;padding:15px;border-radius:12px;margin-top:10px}
+.result{background:#fff;color:#000;padding:20px;border-radius:20px;margin-top:20px}
+</style>
 </head>
+
 <body>
-  <div class="floating-glow"></div>
-  <div class="floating-glow two"></div>
-
-  <nav class="nav">
-    <div class="wrap nav-inner">
-      <div class="brand">
-        <div class="brand-logo">W</div>
-        <span>WITH</span>
-      </div>
-
-      <div class="nav-links">
-        <a href="#features">서비스</a>
-        <a href="#diagnosis">자동진단</a>
-        <a href="#results">결과예시</a>
-        <a href="#contact">문의</a>
-      </div>
-
-      <a href="#diagnosis" class="nav-cta">무료 진단 시작</a>
-    </div>
-  </nav>
-
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div class="reveal visible">
-        <div class="eyebrow">
-          <span class="eyebrow-dot"></span>
-          네이버 플레이스 자동 진단 시스템 · 위드
-        </div>
-        <h1>
-          사장님은 입력만 하세요.<br />
-          <span class="grad">플레이스 최적화 방향은 자동으로 뜹니다.</span>
-        </h1>
-        <p class="hero-desc">
-          업체명 직접 입력도 가능하고, 네이버 지도 링크만 붙여넣어도 기본정보를 최대한 자동 추정합니다.
-          그 위에 부족한 것만 보완해서 더 정교한 결과를 뽑고, 실제 세팅은 위드가 이어받는 구조입니다.
-        </p>
-
-        <div class="hero-actions">
-          <a href="#diagnosis" class="btn btn-primary">지금 무료 진단하기</a>
-          <a href="#results" class="btn btn-secondary">결과 예시 보기</a>
-        </div>
-
-        <div class="hero-stats">
-          <div class="hero-stat reveal delay-1">
-            <strong>링크 자동 불러오기</strong>
-            <p>네이버 지도 링크에서 업체명, 지역, 업종을 가능한 범위에서 자동으로 추정합니다.</p>
-          </div>
-          <div class="hero-stat reveal delay-2">
-            <strong>정밀 진단</strong>
-            <p>자동 추정값 위에 강점, 타겟, 위치 성격을 더해 실제로 쓸 수 있는 문구로 다듬습니다.</p>
-          </div>
-          <div class="hero-stat reveal delay-3">
-            <strong>상담 전환</strong>
-            <p>결과만 보여주는 것이 아니라 부족한 포인트를 찔러 실제 세팅 요청까지 이어집니다.</p>
-          </div>
-        </div>
-      </div>
-
-      <div id="diagnosis" class="glass-card reveal">
-        <div class="card-header">
-          <div>
-            <span class="card-label">무료 자동 진단</span>
-            <h2 class="card-title">우리 매장 플레이스 점검하기</h2>
-          </div>
-          <div class="score-bubble">
-            <strong id="miniScore">43</strong>
-            <span>예상 점수</span>
-          </div>
-        </div>
-
-        <div class="link-box">
-          <div class="option-group" style="margin-top:0;">
-            <h4>네이버 지도 링크로 자동 불러오기</h4>
-            <div class="link-grid">
-              <div class="field" style="margin:0;">
-                <label for="naverLink">네이버 지도 / 플레이스 링크</label>
-                <input id="naverLink" class="input" placeholder="예: https://map.naver.com/p/search/..." />
-              </div>
-              <button class="btn btn-dark" type="button" onclick="parseNaverLink()" style="white-space:nowrap;">
-                링크로 자동 입력
-              </button>
-            </div>
-            <div id="linkStatus" class="status-text">
-              링크를 붙여넣으면 업체명, 지역, 업종을 최대한 자동으로 추정합니다.
-            </div>
-          </div>
-
-          <div id="autoSummary" class="auto-summary">
-            <h5>자동 불러온 정보 요약</h5>
-            <div class="summary-grid">
-              <div class="summary-item">
-                <small>분석한 검색어</small>
-                <strong id="summaryKeyword">-</strong>
-              </div>
-              <div class="summary-item">
-                <small>추정 업종</small>
-                <strong id="summaryIndustry">-</strong>
-              </div>
-              <div class="summary-item">
-                <small>추정 지역</small>
-                <strong id="summaryRegion">-</strong>
-              </div>
-              <div class="summary-item">
-                <small>추정 업체명</small>
-                <strong id="summaryStoreName">-</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div class="field">
-            <label for="name">업체명</label>
-            <input id="name" class="input" placeholder="예: 제주기장횟집" />
-          </div>
-          <div class="field">
-            <label for="phone">연락처</label>
-            <input id="phone" class="input" placeholder="예: 010-1234-5678" />
-          </div>
-          <div class="field">
-            <label for="region">지역</label>
-            <input id="region" class="input" placeholder="예: 제주, 송파구 방이동" />
-          </div>
-          <div class="field">
-            <label for="landmark">가까운 역/랜드마크</label>
-            <input id="landmark" class="input" placeholder="예: 잠실역 10번 출구, 제주공항 근처" />
-          </div>
-        </div>
-
-        <div class="option-group">
-          <h4>업종 카테고리</h4>
-          <div class="chips" id="categoryChips"></div>
-        </div>
-
-        <div class="option-group">
-          <h4>세부 업종</h4>
-          <div class="chips" id="industryChips"></div>
-        </div>
-
-        <div class="option-group">
-          <h4>대표 메뉴/서비스</h4>
-          <div class="chips" id="serviceChips"></div>
-        </div>
-
-        <div class="option-group">
-          <h4>타겟 고객</h4>
-          <div class="chips" id="targetChips"></div>
-        </div>
-
-        <div class="option-group">
-          <h4>매장 위치</h4>
-          <div class="chips" id="locationChips"></div>
-        </div>
-
-        <div class="option-group">
-          <h4>매장 강점</h4>
-          <div class="chips" id="strengthChips"></div>
-        </div>
-
-        <div class="option-group">
-          <h4>주차 여부</h4>
-          <div class="chips" id="parkingChips"></div>
-        </div>
-
-        <div class="option-group">
-          <h4>문구 톤</h4>
-          <div class="chips" id="toneChips"></div>
-        </div>
-
-        <div class="card-actions">
-          <button class="btn btn-primary" onclick="generateResult()">자동 최적화 결과 보기</button>
-          <button class="btn btn-light" onclick="resetForm()">초기화</button>
-        </div>
-
-        <div class="micro-note">
-          <span>링크 자동 추정 + 선택형 보완으로 더 빠르게 결과를 만듭니다</span>
-          <span>실제 세팅이 필요한 부분은 위드 상담으로 연결됩니다</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section after-hero">
-    <div class="wrap">
-      <div id="features" class="section-head reveal">
-        <span class="mini">WHY WITH</span>
-        <h2>예쁜 소개 페이지가 아니라,<br />실제로 문의가 들어오게 설계했습니다.</h2>
-        <p>
-          위드는 단순히 업체 소개를 뽑는 데서 끝나지 않습니다.
-          링크 또는 기본 입력만으로 네이버 플레이스에 필요한 핵심 문구를 자동으로 구성하고,
-          부족한 부분을 바로 보여줘서 실제 상담과 세팅 요청까지 연결되게 만듭니다.
-        </p>
-      </div>
-
-      <div class="feature-grid">
-        <div class="feature-card reveal delay-1">
-          <div class="feature-icon">01</div>
-          <h3>링크 자동 분석</h3>
-          <p>네이버 지도 링크의 검색어를 기준으로 업체명, 지역, 업종을 자동 추정해 진입 장벽을 낮춥니다.</p>
-        </div>
-        <div class="feature-card reveal delay-2">
-          <div class="feature-icon">02</div>
-          <h3>2단 업종 선택</h3>
-          <p>업종 카테고리와 세부 업종을 나눠서 길지 않게 보이면서도 업종별 정밀도를 높였습니다.</p>
-        </div>
-        <div class="feature-card reveal delay-3">
-          <div class="feature-icon">03</div>
-          <h3>자동 생성 초안</h3>
-          <p>상세설명, 길찾기, 추천 키워드, 리뷰 답변까지 한 번에 뽑아 바로 볼 수 있게 만듭니다.</p>
-        </div>
-        <div class="feature-card reveal delay-3">
-          <div class="feature-icon">04</div>
-          <h3>상담 전환 구조</h3>
-          <p>결과를 보여주는 데서 끝나지 않고 부족한 부분을 찔러 실제 세팅 요청으로 연결합니다.</p>
-        </div>
-      </div>
-
-      <div id="results" class="result-grid">
-        <div>
-          <div class="score-panel reveal">
-            <div class="score-panel-top">
-              <div>
-                <div class="score-label">현재 업체 최적화 점수</div>
-                <div class="score-value" id="scoreNumber">43</div>
-              </div>
-              <div style="font-size:48px">✨</div>
-            </div>
-            <p id="scoreMessage">
-              아직 입력 전입니다. 기본 정보와 선택 항목을 채우면 현재 상태와 부족한 부분을 자동으로 진단해드립니다.
-            </p>
-          </div>
-
-          <div class="panel reveal delay-1" style="margin-top:18px">
-            <h3>부족한 부분</h3>
-            <div id="missingList" class="list">
-              <div class="list-item"><span class="dot"></span><span>지역 정보가 없으면 지역 키워드 최적화가 약해집니다.</span></div>
-              <div class="list-item"><span class="dot"></span><span>랜드마크가 없으면 방문 동선 문구가 약해집니다.</span></div>
-              <div class="list-item"><span class="dot"></span><span>강점이 없으면 경쟁업체 대비 차별화가 약해집니다.</span></div>
-            </div>
-          </div>
-
-          <div class="panel reveal delay-2" style="margin-top:18px">
-            <h3>상담이 필요한 이유</h3>
-            <div id="consultList" class="list">
-              <div class="list-item"><span class="dot blue"></span><span>자동 생성 초안만으로는 실제 반영용 세팅 문구가 약할 수 있습니다.</span></div>
-              <div class="list-item"><span class="dot blue"></span><span>업종과 상권에 맞게 미세 조정해야 검색 노출과 전환이 살아납니다.</span></div>
-              <div class="list-item"><span class="dot blue"></span><span>위드가 직접 세팅하면 사장님은 복잡한 수정 과정을 줄일 수 있습니다.</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="panel reveal delay-1">
-            <h3>자동 생성 결과</h3>
-
-            <div class="output-card">
-              <h4>상세설명</h4>
-              <p id="descriptionOutput">입력 후 결과를 생성하면 이곳에 자동 상세설명이 표시됩니다.</p>
-            </div>
-
-            <div class="output-card">
-              <h4>길찾기 문구</h4>
-              <p id="directionOutput">입력 후 결과를 생성하면 이곳에 길찾기 문구가 표시됩니다.</p>
-            </div>
-
-            <div class="output-card">
-              <h4>추천 키워드</h4>
-              <div class="keywords" id="keywordOutput">
-                <span class="keyword">지역 업종</span>
-                <span class="keyword">지역 대표서비스</span>
-              </div>
-            </div>
-
-            <div class="output-card" style="margin-bottom:0">
-              <h4>리뷰 답변 템플릿</h4>
-              <p id="reviewOutput">리뷰 답변 템플릿도 함께 생성됩니다.</p>
-            </div>
-          </div>
-
-          <div id="contact" class="cta-banner reveal delay-2">
-            <small>전환 유도 구간</small>
-            <h3>이 상태 그대로 두실 건가요?</h3>
-            <p>
-              자동 생성은 시작일 뿐입니다. 실제 반영 가능한 문구로 다듬고,
-              업종과 지역에 맞게 세팅 방향을 잡아야 검색 노출과 방문 전환이 살아납니다.
-              위드가 직접 들어가 세팅하는 구조로 연결하면 사장님은 번거롭게 수정하지 않아도 됩니다.
-            </p>
-            <div class="cta-actions">
-              <button class="btn btn-primary" onclick="alert('여기에 카카오톡 상담 링크를 연결하면 됩니다.')">지금 바로 상담 문의하기</button>
-              <button class="btn btn-outline-light" onclick="alert('여기에 세팅 요청 폼 링크를 연결하면 됩니다.')">최적화 적용 요청하기</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <div>
-        <strong>WITH 광고회사</strong><br />
-        네이버 플레이스 자동 진단 · 스마트플레이스 최적화
-      </div>
-      <div>
-        사장님은 입력만 하세요. 세팅 방향은 위드가 잡아드립니다.
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    const categoryMap = {
-      '음식점': [
-        '고깃집','횟집','이자카야','술집','한식집','중식집','일식집','양식집',
-        '치킨집','햄버거집','분식집','국밥집','족발집','보쌈집'
-      ],
-      '카페·디저트': [
-        '카페','디저트카페','베이커리'
-      ],
-      '뷰티': [
-        '미용실','피부관리','네일샵'
-      ],
-      '헬스': [
-        '필라테스','PT샵','요가'
-      ],
-      '의료': [
-        '병원','치과','한의원'
-      ],
-      '기타': [
-        '기타'
-      ]
-    };
-
-    const servicesMap = {
-      '고깃집':['삼겹살','목살','소고기','갈비','점심특선'],
-      '횟집':['모둠회','광어회','우럭회','대방어','해산물'],
-      '이자카야':['사시미','꼬치구이','나베','하이볼','일품요리'],
-      '술집':['하이볼','맥주','소주','안주맛집','혼술'],
-      '한식집':['백반','찌개','불고기','비빔밥','정식'],
-      '중식집':['짜장면','짬뽕','탕수육','마라요리','코스요리'],
-      '일식집':['초밥','사시미','돈카츠','라멘','우동'],
-      '양식집':['파스타','스테이크','리조또','피자','브런치'],
-      '치킨집':['후라이드','양념치킨','간장치킨','순살치킨','맥주'],
-      '햄버거집':['수제버거','치즈버거','치킨버거','감자튀김','세트메뉴'],
-      '분식집':['떡볶이','순대','튀김','김밥','라볶이'],
-      '국밥집':['돼지국밥','순대국밥','소머리국밥','해장국','수육'],
-      '족발집':['족발','냉채족발','막국수','세트메뉴','수육'],
-      '보쌈집':['보쌈','굴보쌈','막국수','수육','정식'],
-      '카페':['커피','브런치','디저트','수제청','시그니처메뉴'],
-      '디저트카페':['케이크','와플','빙수','마카롱','쿠키'],
-      '베이커리':['식빵','소금빵','크로와상','샌드위치','케이크'],
-      '미용실':['커트','펌','염색','클리닉','두피관리'],
-      '피부관리':['여드름관리','윤곽관리','수분관리','웨딩관리','바디관리'],
-      '네일샵':['젤네일','패디','연장','케어','드릴오프'],
-      '필라테스':['개인레슨','그룹레슨','체형교정','재활운동','다이어트'],
-      'PT샵':['개인PT','그룹PT','체형교정','근력증가','다이어트'],
-      '요가':['개인레슨','그룹수업','체형교정','명상','다이어트'],
-      '병원':['통증치료','검진','상담진료','도수치료','피부시술'],
-      '치과':['임플란트','교정','스케일링','충치치료','심미치료'],
-      '한의원':['추나요법','침치료','한약','다이어트한약','통증관리'],
-      '기타':['대표 서비스 1','대표 서비스 2','대표 서비스 3']
-    };
-
-    const categories = Object.keys(categoryMap);
-    const targets = ['혼밥','데이트','가족','회식','직장인','관광객','여성고객','20~30대','40~50대'];
-    const locations = ['역세권','골목상권','대로변','오피스상권','주택상권','대형상가 내부'];
-    const strengths = ['가성비','분위기','전문성','양','서비스','접근성','재방문율','빠른 응대'];
-    const parkings = ['가능','불가','근처 공영주차장','건물 주차 가능'];
-    const tones = ['신뢰형','친근형','고급형','직관형'];
-
-    const state = {
-      category:'음식점',
-      industry:'고깃집',
-      service:'삼겹살',
-      target:'데이트',
-      location:'역세권',
-      strength:'가성비',
-      parking:'가능',
-      tone:'신뢰형'
-    };
-
-    function createChips(containerId, items, key, onChange){
-      const wrap = document.getElementById(containerId);
-      wrap.innerHTML = '';
-      items.forEach(item => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'chip' + (state[key] === item ? ' active' : '');
-        btn.textContent = item;
-        btn.onclick = () => {
-          state[key] = item;
-          if (onChange) onChange(item);
-          renderAllChips();
-          updateMiniScore();
-        };
-        wrap.appendChild(btn);
-      });
-    }
-
-    function renderAllChips(){
-      createChips('categoryChips', categories, 'category', (selectedCategory) => {
-        const firstIndustry = categoryMap[selectedCategory][0];
-        state.industry = firstIndustry;
-        state.service = servicesMap[firstIndustry][0];
-      });
-
-      createChips('industryChips', categoryMap[state.category], 'industry', (selectedIndustry) => {
-        state.service = servicesMap[selectedIndustry][0];
-      });
-
-      createChips('serviceChips', servicesMap[state.industry], 'service');
-      createChips('targetChips', targets, 'target');
-      createChips('locationChips', locations, 'location');
-      createChips('strengthChips', strengths, 'strength');
-      createChips('parkingChips', parkings, 'parking');
-      createChips('toneChips', tones, 'tone');
-    }
-
-    function decodeURIComponentSafe(value) {
-      try {
-        return decodeURIComponent(value);
-      } catch (e) {
-        return value;
-      }
-    }
-
-    function normalizeText(text) {
-      return decodeURIComponentSafe(text || '')
-        .replace(/\+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    function extractKeywordFromLink(rawUrl) {
-      try {
-        const url = new URL(rawUrl);
-
-        const candidates = [
-          url.searchParams.get('searchText'),
-          url.searchParams.get('query'),
-          url.searchParams.get('bk_query'),
-          url.searchParams.get('q')
-        ].filter(Boolean);
-
-        if (candidates.length > 0) {
-          return normalizeText(candidates[0]);
-        }
-
-        const pathname = normalizeText(url.pathname);
-        const parts = pathname.split('/').filter(Boolean);
-        const searchIndex = parts.findIndex(part => part === 'search');
-        if (searchIndex !== -1 && parts[searchIndex + 1]) {
-          return normalizeText(parts[searchIndex + 1]);
-        }
-
-        return '';
-      } catch (e) {
-        return '';
-      }
-    }
-
-    function detectCategoryAndIndustry(keyword) {
-      const text = (keyword || '').toLowerCase();
-
-      const rules = [
-        { match: ['횟집', '회집', '회센터', '숙성회', '방어회', '활어회'], category: '음식점', industry: '횟집' },
-        { match: ['이자카야', '사케', '오뎅바', '야키토리'], category: '음식점', industry: '이자카야' },
-        { match: ['술집', '주점', '포차', '펍', '바'], category: '음식점', industry: '술집' },
-        { match: ['고기집', '고깃집', '삼겹살', '갈비', '소고기', '돼지고기'], category: '음식점', industry: '고깃집' },
-        { match: ['국밥', '해장국'], category: '음식점', industry: '국밥집' },
-        { match: ['족발'], category: '음식점', industry: '족발집' },
-        { match: ['보쌈'], category: '음식점', industry: '보쌈집' },
-        { match: ['분식', '떡볶이', '김밥', '순대'], category: '음식점', industry: '분식집' },
-        { match: ['햄버거', '버거'], category: '음식점', industry: '햄버거집' },
-        { match: ['치킨'], category: '음식점', industry: '치킨집' },
-        { match: ['파스타', '스테이크', '리조또', '브런치'], category: '음식점', industry: '양식집' },
-        { match: ['초밥', '스시', '라멘', '우동', '돈카츠'], category: '음식점', industry: '일식집' },
-        { match: ['짜장', '짬뽕', '탕수육', '마라'], category: '음식점', industry: '중식집' },
-        { match: ['한식', '백반', '찌개', '정식'], category: '음식점', industry: '한식집' },
-
-        { match: ['디저트', '빙수', '마카롱', '케이크'], category: '카페·디저트', industry: '디저트카페' },
-        { match: ['베이커리', '빵집', '소금빵', '크로와상'], category: '카페·디저트', industry: '베이커리' },
-        { match: ['카페', '커피'], category: '카페·디저트', industry: '카페' },
-
-        { match: ['미용실', '헤어샵'], category: '뷰티', industry: '미용실' },
-        { match: ['피부관리', '에스테틱'], category: '뷰티', industry: '피부관리' },
-        { match: ['네일', '네일샵'], category: '뷰티', industry: '네일샵' },
-
-        { match: ['필라테스'], category: '헬스', industry: '필라테스' },
-        { match: ['pt', '피티', '헬스장'], category: '헬스', industry: 'PT샵' },
-        { match: ['요가'], category: '헬스', industry: '요가' },
-
-        { match: ['치과'], category: '의료', industry: '치과' },
-        { match: ['한의원'], category: '의료', industry: '한의원' },
-        { match: ['병원', '의원', '클리닉'], category: '의료', industry: '병원' }
-      ];
-
-      for (const rule of rules) {
-        if (rule.match.some(word => text.includes(word))) {
-          return { category: rule.category, industry: rule.industry };
-        }
-      }
-
-      return { category: '기타', industry: '기타' };
-    }
-
-    function guessRegion(keyword) {
-      const text = keyword || '';
-      const regionPatterns = [
-        /([가-힣]+시\s?[가-힣]+구)/,
-        /([가-힣]+시\s?[가-힣]+동)/,
-        /([가-힣]+구\s?[가-힣]+동)/,
-        /([가-힣]+구)/,
-        /([가-힣]+동)/,
-        /([가-힣]+읍)/,
-        /([가-힣]+면)/,
-        /([가-힣]+리)/
-      ];
-
-      for (const pattern of regionPatterns) {
-        const match = text.match(pattern);
-        if (match) return match[1].trim();
-      }
-
-      const commonRegions = [
-        '강남','송파','잠실','건대','성수','홍대','합정','망원','신촌','여의도',
-        '제주','서면','해운대','광안리','동성로','수원','분당','판교','일산','부천'
-      ];
-
-      for (const region of commonRegions) {
-        if (text.includes(region)) return region;
-      }
-
-      return '';
-    }
-
-    function guessStoreName(keyword, regionGuess, industryGuess) {
-      if (!keyword) return '';
-
-      let name = keyword;
-
-      if (regionGuess) {
-        name = name.replace(regionGuess, '').trim();
-      }
-
-      if (industryGuess && industryGuess !== '기타') {
-        const stripped = name.replace(industryGuess, '').trim();
-        if (stripped.length >= 2) {
-          name = stripped;
-        }
-      }
-
-      name = name.replace(/\s+/g, ' ').trim();
-
-      if (name.length < 2) return keyword;
-      return name;
-    }
-
-    function showAutoSummary({ keyword, category, industry, region, storeName }) {
-      const box = document.getElementById('autoSummary');
-      box.classList.add('show');
-
-      document.getElementById('summaryKeyword').textContent = keyword || '-';
-      document.getElementById('summaryIndustry').textContent = `${category || '-'} > ${industry || '-'}`;
-      document.getElementById('summaryRegion').textContent = region || '추정 실패';
-      document.getElementById('summaryStoreName').textContent = storeName || '추정 실패';
-    }
-
-    function parseNaverLink() {
-      const input = document.getElementById('naverLink').value.trim();
-      const statusEl = document.getElementById('linkStatus');
-
-      if (!input) {
-        statusEl.textContent = '먼저 네이버 지도 링크를 입력해 주세요.';
-        statusEl.className = 'status-text status-warn';
-        return;
-      }
-
-      const keyword = extractKeywordFromLink(input);
-
-      if (!keyword) {
-        statusEl.textContent = '링크에서 검색어를 읽지 못했습니다. 업체명과 지역을 직접 입력해 주세요.';
-        statusEl.className = 'status-text status-warn';
-        return;
-      }
-
-      const detected = detectCategoryAndIndustry(keyword);
-      const regionGuess = guessRegion(keyword);
-      const storeNameGuess = guessStoreName(keyword, regionGuess, detected.industry);
-
-      state.category = detected.category;
-      state.industry = detected.industry;
-      state.service = servicesMap[detected.industry][0];
-
-      if (storeNameGuess) {
-        document.getElementById('name').value = storeNameGuess;
-      }
-      if (regionGuess) {
-        document.getElementById('region').value = regionGuess;
-      }
-
-      renderAllChips();
-      updateMiniScore();
-
-      showAutoSummary({
-        keyword,
-        category: detected.category,
-        industry: detected.industry,
-        region: regionGuess,
-        storeName: storeNameGuess
-      });
-
-      statusEl.textContent = `링크 분석 완료: "${keyword}" 기준으로 ${detected.category} > ${detected.industry} 업종을 자동 반영했습니다. 부족한 정보만 추가로 선택해 주세요.`;
-      statusEl.className = 'status-text status-success';
-    }
-
-    function getForm(){
-      return {
-        name: document.getElementById('name').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        region: document.getElementById('region').value.trim(),
-        landmark: document.getElementById('landmark').value.trim(),
-        category: state.category,
-        industry: state.industry,
-        service: state.service,
-        target: state.target,
-        location: state.location,
-        strength: state.strength,
-        parking: state.parking,
-        tone: state.tone
-      };
-    }
-
-    function calcScore(f){
-      let score = 34;
-      if (f.name) score += 7;
-      if (f.phone) score += 5;
-      if (f.region) score += 7;
-      if (f.landmark) score += 6;
-      if (f.category) score += 5;
-      if (f.industry) score += 7;
-      if (f.service) score += 6;
-      if (f.target) score += 6;
-      if (f.location) score += 6;
-      if (f.strength) score += 6;
-      if (f.parking) score += 4;
-      return Math.min(score, 96);
-    }
-
-    function getKeywords(f){
-      const region = f.region || '지역';
-      const service = f.service || f.industry || '업체';
-      const industry = f.industry || '매장';
-      const target = f.target || '방문';
-      return [
-        `${region} ${industry}`,
-        `${region} ${service}`,
-        `${region} ${target} 추천`,
-        `${region} ${industry} 잘하는 곳`,
-        `${region} ${industry} 방문하기 좋은 곳`
-      ];
-    }
-
-    function getDescription(f){
-      const region = f.region || '지역';
-      const name = f.name || '업체명';
-      const industry = f.industry || '매장';
-      const service = f.service || industry;
-      const target = f.target || '다양한 고객';
-      const location = f.location || '접근성';
-      const strength = f.strength || '만족도';
-      const landmark = f.landmark ? `${f.landmark} 기준으로 찾기 쉬운 위치에 있어 ` : '';
-      const parking = f.parking ? `주차는 ${f.parking} 기준으로 안내드리고 있으며, ` : '';
-
-      const toneMap = {
-        '신뢰형': `${region}에서 ${industry}를 찾는 분들이 기본 정보부터 방문 포인트까지 한눈에 확인할 수 있도록 정리한 ${name}입니다. ${landmark}${service} 중심으로 찾는 고객은 물론 ${target} 고객까지 편하게 방문할 수 있도록 구성되어 있으며, ${location} 특성을 살려 접근성을 높였습니다. ${parking}${strength}을 강점으로 두고 있어 첫 방문 고객도 부담 없이 선택하기 좋고, 재방문으로 이어질 수 있도록 핵심 안내를 명확하게 전달하는 방향으로 최적화되어 있습니다.`,
-        '친근형': `${region}에서 ${service} 찾고 있다면 ${name}을 눈여겨볼 수 있습니다. ${landmark}${target} 고객이 편하게 들르기 좋은 분위기와 ${location} 장점을 갖추고 있고, ${strength}이 강점이라 처음 방문하는 분들도 부담 없이 선택하기 좋습니다. ${parking}네이버 플레이스에서 고객이 궁금해하는 포인트를 빠르게 확인할 수 있도록 소개 문구를 구성했습니다.`,
-        '고급형': `${region} 상권에서 ${service} 경쟁력을 높이기 위해 ${name}의 핵심 강점을 중심으로 정리한 소개 문구입니다. ${landmark}${location} 기반의 접근성과 ${target} 고객 수요를 함께 반영했으며, ${strength}을 차별화 요소로 드러내 브랜드 인식을 강화할 수 있도록 구성했습니다. ${parking}단순한 매장 소개가 아니라 검색 노출 이후 방문 전환까지 고려한 플레이스 최적화 문안입니다.`,
-        '직관형': `${name}은 ${region}에서 ${service}를 찾는 고객에게 적합한 ${industry}입니다. ${landmark}${target} 방문에 맞는 이용 환경과 ${location} 장점을 갖추고 있으며, ${strength}이 핵심 포인트입니다. ${parking}스마트플레이스에서 빠르게 이해되고 선택될 수 있도록 핵심 정보 위주로 정리했습니다.`
-      };
-      return toneMap[f.tone] || toneMap['신뢰형'];
-    }
-
-    function getDirections(f){
-      const landmark = f.landmark || '가까운 역 또는 랜드마크';
-      const name = f.name || '업체';
-      const region = f.region || '지역';
-      const location = f.location || '방문 동선';
-      const parking = f.parking ? `주차는 ${f.parking} 여부를 미리 확인 후 방문하시면 더 편합니다.` : '';
-
-      if (location === '역세권'){
-        return `${landmark} 기준으로 도보 이동이 편한 위치에 있는 ${name}입니다. ${region} 내에서 대중교통으로 방문하기 좋고, 역에서 이동하는 고객이 길을 찾기 쉽도록 안내 문구를 구성했습니다. ${parking}`;
-      }
-      if (location === '골목상권'){
-        return `${landmark} 인근 골목 상권에 위치한 ${name}입니다. 메인 거리에서 안쪽으로 이동하는 동선을 기준으로 안내하는 것이 중요하며, 초행 방문자도 헷갈리지 않도록 랜드마크 중심으로 길찾기 문구를 구성하는 것이 좋습니다. ${parking}`;
-      }
-      if (location === '대형상가 내부'){
-        return `${landmark} 내부 또는 인접 상가권에서 찾을 수 있는 ${name}입니다. 건물명과 층수, 주요 출입구 기준으로 안내를 넣는 것이 방문 전환에 유리합니다. ${parking}`;
-      }
-      return `${landmark} 기준으로 ${region} 내 ${name}을 찾을 수 있도록 방문 동선 중심으로 안내하는 문구입니다. ${location} 특성을 반영해 초행 방문자도 이해하기 쉬운 흐름으로 정리하는 것이 좋습니다. ${parking}`;
-    }
-
-    function getMissing(f){
-      const items = [];
-      if (!f.region) items.push('지역 정보가 없어 지역 키워드 최적화가 약합니다.');
-      if (!f.service) items.push('대표 서비스가 없어 검색 의도 반영이 부족합니다.');
-      if (!f.target) items.push('타겟 고객 설정이 없어 방문 상황별 문구가 약합니다.');
-      if (!f.location) items.push('매장 위치 특성이 없어 길찾기 전환력이 떨어집니다.');
-      if (!f.strength) items.push('강점이 없어 경쟁업체 대비 차별화가 약합니다.');
-      if (!f.landmark) items.push('랜드마크 정보가 없어 실제 방문 동선 안내가 약합니다.');
-      if (!f.phone) items.push('연락처 정보가 없어 상담 전환 및 기본 신뢰도가 낮습니다.');
-      return items.length ? items : ['기본 정보는 갖춰졌지만, 실제 반영용 세팅과 문구 다듬기가 더 필요합니다.'];
-    }
-
-    function getConsultReasons(score, missingCount){
-      const arr = [];
-      if (score < 60) arr.push('기본 플레이스 정보가 부족해 검색 경쟁력이 약한 상태입니다.');
-      if (score < 75) arr.push('자동 생성 초안은 나왔지만 실제 노출용으로는 업종·상권 기준 세부 조정이 필요합니다.');
-      if (missingCount >= 3) arr.push('핵심 입력값이 비어 있어 방문 전환 문구가 약합니다.');
-      arr.push('위드가 직접 세팅하면 복잡한 수정 없이 빠르게 반영 방향을 잡을 수 있습니다.');
-      return arr;
-    }
-
-    function getReviewReply(f){
-      const name = f.name || '매장';
-      const service = f.service || f.industry || '서비스';
-      const strength = f.strength || '만족스러운 경험';
-      return `방문해주시고 좋은 리뷰 남겨주셔서 감사합니다. ${name}의 ${service}와 ${strength} 부분을 좋게 봐주셔서 정말 감사합니다. 다음 방문에도 더 만족하실 수 있도록 꾸준히 관리하겠습니다.`;
-    }
-
-    function animateCount(el, from, to, duration = 900){
-      const start = performance.now();
-      function frame(now){
-        const progress = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.round(from + (to - from) * eased);
-        el.textContent = current;
-        if (progress < 1) requestAnimationFrame(frame);
-      }
-      requestAnimationFrame(frame);
-    }
-
-    function updateMiniScore(){
-      const f = getForm();
-      const score = calcScore(f);
-      document.getElementById('miniScore').textContent = score;
-    }
-
-    function renderList(containerId, items, dotClass = ''){
-      const wrap = document.getElementById(containerId);
-      wrap.innerHTML = '';
-      items.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'list-item';
-        row.innerHTML = `<span class="dot ${dotClass}"></span><span>${item}</span>`;
-        wrap.appendChild(row);
-      });
-    }
-
-    function generateResult(){
-      const f = getForm();
-      const score = calcScore(f);
-      const keywords = getKeywords(f);
-      const description = getDescription(f);
-      const directions = getDirections(f);
-      const missing = getMissing(f);
-      const consult = getConsultReasons(score, missing.length);
-      const review = getReviewReply(f);
-
-      document.getElementById('miniScore').textContent = score;
-      animateCount(document.getElementById('scoreNumber'), Number(document.getElementById('scoreNumber').textContent) || 43, score, 950);
-
-      const scoreMessage = score >= 80
-        ? '기본 정보는 잘 잡혀 있습니다. 다만 실제 노출과 전환을 높이려면 문구 정교화와 반영 작업이 더 필요합니다.'
-        : score >= 60
-        ? '기본 정보는 어느 정도 있지만 검색 의도와 방문 전환 관점에서 보완이 필요합니다.'
-        : '노출과 방문 전환에 불리한 상태입니다. 자동 생성 초안만으로 끝내지 말고 실제 세팅까지 연결해야 합니다.';
-      document.getElementById('scoreMessage').textContent = scoreMessage;
-
-      document.getElementById('descriptionOutput').textContent = description;
-      document.getElementById('directionOutput').textContent = directions;
-      document.getElementById('reviewOutput').textContent = review;
-
-      const keywordWrap = document.getElementById('keywordOutput');
-      keywordWrap.innerHTML = '';
-      keywords.forEach(item => {
-        const tag = document.createElement('span');
-        tag.className = 'keyword';
-        tag.textContent = item;
-        keywordWrap.appendChild(tag);
-      });
-
-      renderList('missingList', missing, '');
-      renderList('consultList', consult, 'blue');
-
-      document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
-    }
-
-    function resetForm(){
-      document.getElementById('name').value = '';
-      document.getElementById('phone').value = '';
-      document.getElementById('region').value = '';
-      document.getElementById('landmark').value = '';
-      document.getElementById('naverLink').value = '';
-
-      const statusEl = document.getElementById('linkStatus');
-      statusEl.textContent = '링크를 붙여넣으면 업체명, 지역, 업종을 최대한 자동으로 추정합니다.';
-      statusEl.className = 'status-text';
-
-      document.getElementById('autoSummary').classList.remove('show');
-      document.getElementById('summaryKeyword').textContent = '-';
-      document.getElementById('summaryIndustry').textContent = '-';
-      document.getElementById('summaryRegion').textContent = '-';
-      document.getElementById('summaryStoreName').textContent = '-';
-
-      state.category = '음식점';
-      state.industry = '고깃집';
-      state.service = '삼겹살';
-      state.target = '데이트';
-      state.location = '역세권';
-      state.strength = '가성비';
-      state.parking = '가능';
-      state.tone = '신뢰형';
-
-      renderAllChips();
-      updateMiniScore();
-
-      animateCount(document.getElementById('scoreNumber'), Number(document.getElementById('scoreNumber').textContent) || 43, 43, 700);
-      document.getElementById('scoreMessage').textContent = '아직 입력 전입니다. 기본 정보와 선택 항목을 채우면 현재 상태와 부족한 부분을 자동으로 진단해드립니다.';
-      document.getElementById('descriptionOutput').textContent = '입력 후 결과를 생성하면 이곳에 자동 상세설명이 표시됩니다.';
-      document.getElementById('directionOutput').textContent = '입력 후 결과를 생성하면 이곳에 길찾기 문구가 표시됩니다.';
-      document.getElementById('reviewOutput').textContent = '리뷰 답변 템플릿도 함께 생성됩니다.';
-      document.getElementById('keywordOutput').innerHTML = '<span class="keyword">지역 업종</span><span class="keyword">지역 대표서비스</span>';
-
-      renderList('missingList', [
-        '지역 정보가 없으면 지역 키워드 최적화가 약해집니다.',
-        '랜드마크가 없으면 방문 동선 문구가 약해집니다.',
-        '강점이 없으면 경쟁업체 대비 차별화가 약해집니다.'
-      ], '');
-
-      renderList('consultList', [
-        '자동 생성 초안만으로는 실제 반영용 세팅 문구가 약할 수 있습니다.',
-        '업종과 상권에 맞게 미세 조정해야 검색 노출과 전환이 살아납니다.',
-        '위드가 직접 세팅하면 사장님은 복잡한 수정 과정을 줄일 수 있습니다.'
-      ], 'blue');
-    }
-
-    function setupReveal(){
-      const elements = document.querySelectorAll('.reveal');
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      }, { threshold: 0.14 });
-
-      elements.forEach(el => observer.observe(el));
-    }
-
-    ['name','phone','region','landmark'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateMiniScore);
-    });
-
-    renderAllChips();
-    updateMiniScore();
-    setupReveal();
-  </script>
+<div class="wrap">
+
+<h2>WITH 자동 진단</h2>
+
+<div class="card">
+
+<input id="link" class="input" placeholder="네이버 지도 링크 입력"/>
+<br><br>
+<button class="btn" onclick="parse()">자동 분석</button>
+
+<div id="summary" class="summary" style="display:none;"></div>
+
+<br>
+
+<input id="name" class="input" placeholder="업체명"/>
+<br><br>
+<input id="region" class="input" placeholder="지역"/>
+
+<h4>업종</h4>
+<div id="industry"></div>
+
+<h4>위치</h4>
+<div id="location"></div>
+
+<br>
+<button class="btn" onclick="generate()">결과 생성</button>
+
+</div>
+
+<div id="result" class="result"></div>
+
+</div>
+
+<script>
+
+const industries = [
+"고깃집","횟집","이자카야","술집","한식집","중식집","일식집","양식집",
+"카페","디저트카페","베이커리","치킨집","햄버거집"
+];
+
+const locations = [
+"역 바로 앞","역 도보 3분","역 도보 5~10분",
+"골목 안쪽","대로변","상가 내부",
+"오피스 상권","주택가","관광지"
+];
+
+let state={
+industry:"",
+location:""
+};
+
+function render(){
+const iWrap=document.getElementById('industry');
+const lWrap=document.getElementById('location');
+
+iWrap.innerHTML="";
+lWrap.innerHTML="";
+
+industries.forEach(i=>{
+const el=document.createElement('div');
+el.className='chip'+(state.industry===i?' active':'');
+el.innerText=i;
+el.onclick=()=>{state.industry=i;render();}
+iWrap.appendChild(el);
+});
+
+locations.forEach(l=>{
+const el=document.createElement('div');
+el.className='chip'+(state.location===l?' active':'');
+el.innerText=l;
+el.onclick=()=>{state.location=l;render();}
+lWrap.appendChild(el);
+});
+}
+
+function extractKeyword(url){
+try{
+const u=new URL(url);
+return decodeURIComponent(u.searchParams.get('query')||u.searchParams.get('searchText')||"");
+}catch{
+return "";
+}
+}
+
+function detect(keyword){
+let text=keyword.replace(/\s/g,"");
+
+const rules=[
+{w:["횟집","회","대방어","광어"],i:"횟집"},
+{w:["이자카야","꼬치","사케"],i:"이자카야"},
+{w:["술집","포차","바","펍"],i:"술집"},
+{w:["삼겹살","고기","갈비"],i:"고깃집"},
+{w:["짜장","짬뽕","마라"],i:"중식집"},
+{w:["초밥","라멘","돈카츠"],i:"일식집"},
+{w:["파스타","피자","브런치"],i:"양식집"},
+{w:["카페","커피"],i:"카페"},
+{w:["케이크","디저트"],i:"디저트카페"},
+{w:["베이커리","빵"],i:"베이커리"},
+{w:["치킨"],i:"치킨집"},
+{w:["버거","햄버거"],i:"햄버거집"}
+];
+
+for(let r of rules){
+if(r.w.some(w=>text.includes(w))) return r.i;
+}
+
+return "";
+}
+
+function confidence(keyword,industry,region){
+let score=0;
+if(keyword) score+=40;
+if(industry) score+=30;
+if(region) score+=30;
+
+if(score>=80) return "높음";
+if(score>=50) return "보통";
+return "낮음";
+}
+
+function parse(){
+const link=document.getElementById('link').value;
+const keyword=extractKeyword(link);
+const industry=detect(keyword);
+
+let region="";
+const regionList=["강남","송파","잠실","건대","홍대","제주","서면"];
+regionList.forEach(r=>{
+if(keyword.includes(r)) region=r;
+});
+
+let name=keyword.replace(region,"").replace(industry,"").trim();
+
+document.getElementById('name').value=name;
+document.getElementById('region').value=region;
+state.industry=industry;
+
+const conf=confidence(keyword,industry,region);
+
+document.getElementById('summary').style.display='block';
+document.getElementById('summary').innerHTML=`
+검색어: ${keyword || "-"}<br>
+업종: ${industry || "-"}<br>
+지역: ${region || "-"}<br>
+업체명: ${name || "-"}<br>
+신뢰도: ${conf}
+`;
+
+render();
+}
+
+function generate(){
+const name=document.getElementById('name').value;
+const region=document.getElementById('region').value;
+
+const desc=`${region} ${state.industry} ${name}은 ${state.location} 위치에 있으며 방문 접근성이 좋고 검색 노출을 고려한 최적화 문구입니다.`;
+
+document.getElementById('result').innerText=desc;
+}
+
+render();
+
+</script>
+
 </body>
 </html>

@@ -462,6 +462,11 @@
       z-index:0;
     }
 
+    .hidden-input-wrap{
+      display:none;
+      margin-top:10px;
+    }
+
     @media (max-width:1150px){
       .hero-grid,.result-grid{grid-template-columns:1fr}
       .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -538,8 +543,8 @@
             <p>지역만 입력해도 중심상권, 대로변, 역 인근 같은 기준점을 자동 추천합니다.</p>
           </div>
           <div class="hero-stat reveal delay-3">
-            <strong>실문구 진단</strong>
-            <p>현재 플레이스 상세설명을 붙여넣으면 실제 문구 기준으로 진단합니다.</p>
+            <strong>서비스 폭 확장</strong>
+            <p>양식집에 돈가스, 고깃집에 닭갈비처럼 더 현실적인 대표 메뉴 선택이 가능합니다.</p>
           </div>
         </div>
       </div>
@@ -639,6 +644,9 @@
         <div class="option-group">
           <h4>대표 메뉴/서비스</h4>
           <div class="chips" id="serviceChips"></div>
+          <div id="customServiceWrap" class="hidden-input-wrap">
+            <input id="customServiceInput" class="input" placeholder="대표 메뉴/서비스 직접 입력" />
+          </div>
         </div>
 
         <div class="option-group">
@@ -704,8 +712,8 @@
         </div>
         <div class="feature-card reveal delay-3">
           <div class="feature-icon">03</div>
-          <h3>가이드형 결과</h3>
-          <p>긴 문단 대신 무엇을 넣어야 하는지 바로 이해되는 보완 가이드로 보여줍니다.</p>
+          <h3>서비스 직접입력</h3>
+          <p>업종 리스트 안에 없더라도 직접입력으로 현실 매장 메뉴를 유연하게 반영할 수 있습니다.</p>
         </div>
         <div class="feature-card reveal delay-3">
           <div class="feature-icon">04</div>
@@ -733,7 +741,7 @@
             <h3>부족한 부분</h3>
             <div id="missingList" class="list">
               <div class="list-item"><span class="dot"></span><span>지역 정보가 없으면 지역 키워드 최적화가 약해집니다.</span></div>
-              <div class="list-item"><span class="dot"></span><span>기준점이 없으면 방문 동선 문구가 약해집니다.</span></div>
+              <div class="list-item"><span class="dot"></span><span>추천 기준점을 선택하지 않으면 방문 동선 문구가 약합니다.</span></div>
               <div class="list-item"><span class="dot"></span><span>강점이 없으면 경쟁업체 대비 차별화가 약해집니다.</span></div>
             </div>
           </div>
@@ -920,44 +928,112 @@
     };
 
     const servicesMap = {
-      '고깃집':['삼겹살','목살','소고기','갈비','점심특선'],
-      '횟집':['모둠회','광어회','우럭회','대방어','해산물'],
-      '이자카야':['사시미','꼬치구이','나베','하이볼','일품요리'],
-      '술집':['하이볼','맥주','소주','안주맛집','혼술'],
-      '한식집':['백반','찌개','불고기','비빔밥','정식'],
-      '중식집':['짜장면','짬뽕','탕수육','마라요리','코스요리'],
-      '일식집':['초밥','사시미','돈카츠','라멘','우동'],
-      '양식집':['파스타','스테이크','리조또','피자','브런치'],
-      '치킨집':['후라이드','양념치킨','간장치킨','순살치킨','맥주'],
-      '햄버거집':['수제버거','치즈버거','치킨버거','감자튀김','세트메뉴'],
-      '분식집':['떡볶이','순대','튀김','김밥','라볶이'],
-      '국밥집':['돼지국밥','순대국밥','소머리국밥','해장국','수육'],
-      '족발집':['족발','냉채족발','막국수','세트메뉴','수육'],
-      '보쌈집':['보쌈','굴보쌈','막국수','수육','정식'],
-      '카페':['커피','브런치','디저트','수제청','시그니처메뉴'],
-      '디저트카페':['케이크','와플','빙수','마카롱','쿠키'],
-      '베이커리':['식빵','소금빵','크로와상','샌드위치','케이크'],
-      '미용실':['커트','펌','염색','클리닉','두피관리'],
-      '피부관리':['여드름관리','윤곽관리','수분관리','웨딩관리','바디관리'],
-      '네일샵':['젤네일','패디','연장','케어','드릴오프'],
-      '필라테스':['개인레슨','그룹레슨','체형교정','재활운동','다이어트'],
-      'PT샵':['개인PT','그룹PT','체형교정','근력증가','다이어트'],
-      '요가':['개인레슨','그룹수업','체형교정','명상','다이어트'],
-      '병원':['통증치료','검진','상담진료','도수치료','피부시술'],
-      '치과':['임플란트','교정','스케일링','충치치료','심미치료'],
-      '한의원':['추나요법','침치료','한약','다이어트한약','통증관리'],
-      '기타':['대표 서비스 1','대표 서비스 2','대표 서비스 3']
+      '고깃집': [
+        '삼겹살','목살','소고기','갈비','돼지갈비','닭갈비','양갈비','오리고기',
+        '특수부위','제육볶음','점심특선','직접입력'
+      ],
+      '횟집': [
+        '모둠회','광어회','우럭회','대방어','해산물','전복','매운탕','회정식',
+        '물회','고등어회','직접입력'
+      ],
+      '이자카야': [
+        '사시미','꼬치구이','나베','하이볼','일품요리','야키토리','오뎅탕',
+        '숙성회','튀김요리','직접입력'
+      ],
+      '술집': [
+        '하이볼','맥주','소주','안주맛집','혼술','포차메뉴','전골','치킨',
+        '마른안주','직접입력'
+      ],
+      '한식집': [
+        '백반','찌개','불고기','비빔밥','정식','국밥','칼국수','냉면',
+        '쌈밥','생선구이','직접입력'
+      ],
+      '중식집': [
+        '짜장면','짬뽕','탕수육','마라요리','코스요리','볶음밥','깐풍기',
+        '양장피','딤섬','직접입력'
+      ],
+      '일식집': [
+        '초밥','사시미','돈카츠','라멘','우동','소바','덮밥','가츠동',
+        '나베','직접입력'
+      ],
+      '양식집': [
+        '파스타','피자','리조또','스테이크','브런치','돈가스','필라프',
+        '샐러드','오믈렛','수프','직접입력'
+      ],
+      '치킨집': [
+        '후라이드','양념치킨','간장치킨','순살치킨','맥주','닭강정',
+        '직접입력'
+      ],
+      '햄버거집': [
+        '수제버거','치즈버거','치킨버거','감자튀김','세트메뉴','새우버거',
+        '직접입력'
+      ],
+      '분식집': [
+        '떡볶이','순대','튀김','김밥','라볶이','쫄면','오뎅','돈가스',
+        '직접입력'
+      ],
+      '국밥집': [
+        '돼지국밥','순대국밥','소머리국밥','해장국','수육','내장국밥',
+        '직접입력'
+      ],
+      '족발집': [
+        '족발','냉채족발','막국수','세트메뉴','수육','불족발','직접입력'
+      ],
+      '보쌈집': [
+        '보쌈','굴보쌈','막국수','수육','정식','족보세트','직접입력'
+      ],
+      '카페': [
+        '커피','브런치','디저트','수제청','시그니처메뉴','베이글','샌드위치',
+        '직접입력'
+      ],
+      '디저트카페': [
+        '케이크','와플','빙수','마카롱','쿠키','타르트','크로플','직접입력'
+      ],
+      '베이커리': [
+        '식빵','소금빵','크로와상','샌드위치','케이크','베이글','구움과자',
+        '직접입력'
+      ],
+      '미용실': [
+        '커트','펌','염색','클리닉','두피관리','레이어드컷','볼륨매직','직접입력'
+      ],
+      '피부관리': [
+        '여드름관리','윤곽관리','수분관리','웨딩관리','바디관리','리프팅','직접입력'
+      ],
+      '네일샵': [
+        '젤네일','패디','연장','케어','드릴오프','이달의아트','직접입력'
+      ],
+      '필라테스': [
+        '개인레슨','그룹레슨','체형교정','재활운동','다이어트','기구필라테스','직접입력'
+      ],
+      'PT샵': [
+        '개인PT','그룹PT','체형교정','근력증가','다이어트','바디프로필','직접입력'
+      ],
+      '요가': [
+        '개인레슨','그룹수업','체형교정','명상','다이어트','플라잉요가','직접입력'
+      ],
+      '병원': [
+        '통증치료','검진','상담진료','도수치료','피부시술','물리치료','직접입력'
+      ],
+      '치과': [
+        '임플란트','교정','스케일링','충치치료','심미치료','사랑니발치','직접입력'
+      ],
+      '한의원': [
+        '추나요법','침치료','한약','다이어트한약','통증관리','교통사고치료','직접입력'
+      ],
+      '기타': [
+        '대표 서비스 1','대표 서비스 2','대표 서비스 3','직접입력'
+      ]
     };
 
     const keywordMap = {
-      '고깃집': ['고기', '삼겹살', '소고기', '갈비', '회식'],
+      '고깃집': ['고기', '삼겹살', '갈비', '닭갈비', '회식'],
       '횟집': ['횟집', '회', '모둠회', '해산물', '술'],
-      '이자카야': ['이자카야', '사케', '하이볼', '꼬치', '데이트'],
+      '이자카야': ['이자카야', '사시미', '하이볼', '꼬치', '데이트'],
       '술집': ['술집', '하이볼', '맥주', '안주', '2차'],
-      '한식집': ['한식', '백반', '정식', '점심', '집밥'],
+      '한식집': ['한식', '백반', '찌개', '국밥', '정식'],
       '중식집': ['중식', '짜장면', '짬뽕', '탕수육', '마라'],
-      '일식집': ['일식', '초밥', '사시미', '돈카츠', '라멘'],
-      '양식집': ['양식', '파스타', '피자', '브런치', '데이트'],
+      '일식집': ['일식', '초밥', '돈카츠', '라멘', '우동'],
+      '양식집': ['양식', '파스타', '피자', '브런치', '돈가스'],
       '치킨집': ['치킨', '후라이드', '양념치킨', '치맥', '야식'],
       '햄버거집': ['햄버거', '수제버거', '버거', '치즈버거', '점심'],
       '분식집': ['분식', '떡볶이', '김밥', '순대', '튀김'],
@@ -990,6 +1066,7 @@
       category:'음식점',
       industry:'고깃집',
       service:'삼겹살',
+      customService:'',
       target:'데이트',
       location:'역세권',
       strength:'가성비',
@@ -997,6 +1074,22 @@
       tone:'신뢰형',
       landmark:''
     };
+
+    function getCurrentServiceValue() {
+      if (state.service === '직접입력') {
+        return document.getElementById('customServiceInput').value.trim() || state.customService || '직접입력';
+      }
+      return state.service;
+    }
+
+    function toggleCustomServiceInput() {
+      const wrap = document.getElementById('customServiceWrap');
+      if (state.service === '직접입력') {
+        wrap.style.display = 'block';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
 
     function createChips(containerId, items, key, onChange){
       const wrap = document.getElementById(containerId);
@@ -1008,9 +1101,14 @@
         btn.textContent = item;
         btn.onclick = () => {
           state[key] = item;
+          if (key === 'service' && item !== '직접입력') {
+            state.customService = '';
+            document.getElementById('customServiceInput').value = '';
+          }
           if (onChange) onChange(item);
           renderAllChips();
           renderLandmarkSuggestions();
+          toggleCustomServiceInput();
           updateMiniScore();
         };
         wrap.appendChild(btn);
@@ -1022,10 +1120,14 @@
         const firstIndustry = categoryMap[selectedCategory][0];
         state.industry = firstIndustry;
         state.service = servicesMap[firstIndustry][0];
+        state.customService = '';
+        document.getElementById('customServiceInput').value = '';
       });
 
       createChips('industryChips', categoryMap[state.category], 'industry', (selectedIndustry) => {
         state.service = servicesMap[selectedIndustry][0];
+        state.customService = '';
+        document.getElementById('customServiceInput').value = '';
       });
 
       createChips('serviceChips', servicesMap[state.industry], 'service');
@@ -1034,6 +1136,7 @@
       createChips('strengthChips', strengths, 'strength');
       createChips('parkingChips', parkings, 'parking');
       createChips('toneChips', tones, 'tone');
+      toggleCustomServiceInput();
     }
 
     function getLandmarkSuggestions(region, location) {
@@ -1117,14 +1220,14 @@
         { match: ['횟집', '회집', '회센터', '숙성회', '방어회', '활어회'], category: '음식점', industry: '횟집' },
         { match: ['이자카야', '사케', '오뎅바', '야키토리'], category: '음식점', industry: '이자카야' },
         { match: ['술집', '주점', '포차', '펍', '바'], category: '음식점', industry: '술집' },
-        { match: ['고기집', '고깃집', '삼겹살', '갈비', '소고기', '돼지고기'], category: '음식점', industry: '고깃집' },
+        { match: ['고기집', '고깃집', '삼겹살', '갈비', '소고기', '돼지고기', '닭갈비', '양갈비'], category: '음식점', industry: '고깃집' },
         { match: ['국밥', '해장국'], category: '음식점', industry: '국밥집' },
         { match: ['족발'], category: '음식점', industry: '족발집' },
         { match: ['보쌈'], category: '음식점', industry: '보쌈집' },
         { match: ['분식', '떡볶이', '김밥', '순대'], category: '음식점', industry: '분식집' },
         { match: ['햄버거', '버거'], category: '음식점', industry: '햄버거집' },
         { match: ['치킨'], category: '음식점', industry: '치킨집' },
-        { match: ['파스타', '스테이크', '리조또', '브런치'], category: '음식점', industry: '양식집' },
+        { match: ['파스타', '스테이크', '리조또', '브런치', '돈가스', '돈까스', '피자'], category: '음식점', industry: '양식집' },
         { match: ['초밥', '스시', '라멘', '우동', '돈카츠'], category: '음식점', industry: '일식집' },
         { match: ['짜장', '짬뽕', '탕수육', '마라'], category: '음식점', industry: '중식집' },
         { match: ['한식', '백반', '찌개', '정식'], category: '음식점', industry: '한식집' },
@@ -1225,6 +1328,7 @@
       state.category = detected.category;
       state.industry = detected.industry;
       state.service = servicesMap[detected.industry][0];
+      state.customService = '';
 
       if (storeNameGuess) document.getElementById('name').value = storeNameGuess;
       if (regionGuess) {
@@ -1232,6 +1336,7 @@
         state.landmark = '';
       }
 
+      document.getElementById('customServiceInput').value = '';
       renderAllChips();
       renderLandmarkSuggestions();
       updateMiniScore();
@@ -1257,7 +1362,7 @@
         landmark: state.landmark,
         category: state.category,
         industry: state.industry,
-        service: state.service,
+        service: getCurrentServiceValue(),
         target: state.target,
         location: state.location,
         strength: state.strength,
@@ -1272,14 +1377,14 @@
 
     function getIndustryCheckWords(industry) {
       const map = {
-        '고깃집': ['고기', '삼겹살', '목살', '소고기', '갈비', '한우'],
-        '횟집': ['회', '횟집', '광어', '우럭', '모둠회', '해산물', '전복'],
+        '고깃집': ['고기', '삼겹살', '목살', '소고기', '갈비', '한우', '닭갈비', '양갈비', '오리'],
+        '횟집': ['회', '횟집', '광어', '우럭', '모둠회', '해산물', '전복', '물회'],
         '이자카야': ['이자카야', '사시미', '꼬치', '하이볼', '나베'],
         '술집': ['술집', '하이볼', '맥주', '소주', '안주'],
-        '한식집': ['한식', '백반', '정식', '찌개', '불고기'],
+        '한식집': ['한식', '백반', '정식', '찌개', '불고기', '국밥'],
         '중식집': ['중식', '짜장', '짬뽕', '탕수육', '마라'],
-        '일식집': ['일식', '초밥', '사시미', '라멘', '우동', '돈카츠'],
-        '양식집': ['양식', '파스타', '피자', '브런치', '스테이크'],
+        '일식집': ['일식', '초밥', '사시미', '라멘', '우동', '돈카츠', '돈가츠'],
+        '양식집': ['양식', '파스타', '피자', '브런치', '스테이크', '돈가스', '돈까스', '리조또'],
         '치킨집': ['치킨', '후라이드', '양념치킨', '순살'],
         '햄버거집': ['햄버거', '버거', '수제버거', '치즈버거'],
         '분식집': ['분식', '떡볶이', '김밥', '순대', '튀김'],
@@ -1540,7 +1645,9 @@
       if (f.landmark) score += 5;
       if (f.category) score += 5;
       if (f.industry) score += 6;
-      if (f.service) score += 6;
+      if (f.service && f.service !== '직접입력') score += 6;
+      if (f.service && f.service !== '직접입력' && f.service.length > 0) score += 0;
+      if (f.service && f.service.length > 0) score += 6;
       if (f.target) score += 5;
       if (f.location) score += 5;
       if (f.strength) score += 5;
@@ -1669,7 +1776,7 @@
     function getMissing(f){
       const items = [];
       if (!f.region) items.push('지역 정보가 없어 지역 키워드 최적화가 약합니다.');
-      if (!f.service) items.push('대표 서비스가 없어 검색 의도 반영이 부족합니다.');
+      if (!f.service || f.service === '직접입력') items.push('대표 서비스가 구체적으로 정해지지 않아 검색 의도 반영이 부족할 수 있습니다.');
       if (!f.target) items.push('타겟 고객 설정이 없어 방문 상황별 문구가 약합니다.');
       if (!f.location) items.push('매장 위치 특성이 없어 길찾기 전환력이 떨어집니다.');
       if (!f.strength) items.push('강점이 없어 경쟁업체 대비 차별화가 약합니다.');
@@ -1694,10 +1801,12 @@
       document.getElementById('region').value = '';
       document.getElementById('naverLink').value = '';
       document.getElementById('existingDescription').value = '';
+      document.getElementById('customServiceInput').value = '';
 
       state.category = '음식점';
       state.industry = '고깃집';
       state.service = '삼겹살';
+      state.customService = '';
       state.target = '데이트';
       state.location = '역세권';
       state.strength = '가성비';
@@ -1717,6 +1826,7 @@
 
       renderAllChips();
       renderLandmarkSuggestions();
+      toggleCustomServiceInput();
       updateMiniScore();
 
       animateCount(document.getElementById('scoreNumber'), Number(document.getElementById('scoreNumber').textContent) || 29, 29, 700);
@@ -1826,6 +1936,11 @@
     document.getElementById('region').addEventListener('input', () => {
       state.landmark = '';
       renderLandmarkSuggestions();
+      updateMiniScore();
+    });
+
+    document.getElementById('customServiceInput').addEventListener('input', (e) => {
+      state.customService = e.target.value.trim();
       updateMiniScore();
     });
 

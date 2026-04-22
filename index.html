@@ -784,7 +784,6 @@
         </div>
       </div>
 
-
       <div id="diagnosis" class="glass-card reveal">
         <div class="card-header">
           <div>
@@ -799,7 +798,7 @@
 
         <div class="link-box">
           <div class="option-group" style="margin-top:0;">
-            <h4>네이버 지도 링크 입력란</h4>
+            <h4>네이버 지도 링크로 자동 불러오기</h4>
             <div class="link-grid">
               <div class="field" style="margin:0;">
                 <label for="naverLink">네이버 지도 / 플레이스 링크</label>
@@ -888,16 +887,25 @@
         <div class="option-group">
           <h4>타겟 고객</h4>
           <div class="chips" id="targetChips"></div>
+          <div id="customTargetWrap" class="hidden-input-wrap">
+            <input id="customTargetInput" class="input" placeholder="타겟 고객 직접 입력" />
+          </div>
         </div>
 
         <div class="option-group">
           <h4>매장 위치</h4>
           <div class="chips" id="locationChips"></div>
+          <div id="customLocationWrap" class="hidden-input-wrap">
+            <input id="customLocationInput" class="input" placeholder="매장 위치 직접 입력" />
+          </div>
         </div>
 
         <div class="option-group">
           <h4>매장 강점</h4>
           <div class="chips" id="strengthChips"></div>
+          <div id="customStrengthWrap" class="hidden-input-wrap">
+            <input id="customStrengthInput" class="input" placeholder="매장 강점 직접 입력" />
+          </div>
         </div>
 
         <div class="option-group">
@@ -954,7 +962,7 @@
             <h3>부족한 부분</h3>
             <div id="missingList" class="list">
               <div class="list-item"><span class="dot"></span><span>지역 정보가 없으면 지역 키워드 최적화가 약해집니다.</span></div>
-              <div class="list-item"><span class="dot"></span><span>추천 기준점을 선택하지 않으면 방문 동선 문구가 약합니다.</span></div>
+              <div class="list-item"><span class="dot"></span><span>추천 기준점을 선택하지 않으면 방문 동선 문구가 약해집니다.</span></div>
               <div class="list-item"><span class="dot"></span><span>강점이 없으면 경쟁업체 대비 차별화가 약해집니다.</span></div>
             </div>
           </div>
@@ -996,9 +1004,7 @@
 
               <div style="margin-bottom:14px;">
                 <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:6px;">한줄 진단</div>
-                <p id="descriptionDiagnosis" style="margin:0;color:#334155;line-height:1.8;">
-                  입력 후 결과를 생성하면 상세설명 진단이 표시됩니다.
-                </p>
+                <p id="descriptionDiagnosis">입력 후 결과를 생성하면 상세설명 진단이 표시됩니다.</p>
               </div>
 
               <div style="margin-bottom:14px;">
@@ -1032,9 +1038,7 @@
 
               <div style="margin-bottom:14px;">
                 <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:6px;">한줄 진단</div>
-                <p id="directionDiagnosis" style="margin:0;color:#334155;line-height:1.8;">
-                  입력 후 결과를 생성하면 길찾기 진단이 표시됩니다.
-                </p>
+                <p id="directionDiagnosis">입력 후 결과를 생성하면 길찾기 진단이 표시됩니다.</p>
               </div>
 
               <div style="margin-bottom:14px;">
@@ -1067,7 +1071,7 @@
             <div style="color:#ff6b6b;font-weight:900;margin-bottom:10px;">현재 상태 유지 시 모든 키워드 노출 가능성 낮음</div>
             <h3>이 상태 그대로 두실 건가요?</h3>
             <p>
-              세팅은 시작일 뿐입니다. 실제 반영 가능한 문구로 다듬고,
+              자동 생성은 시작일 뿐입니다. 실제 반영 가능한 문구로 다듬고,
               업종과 지역에 맞게 세팅 방향을 잡아야 검색 노출과 방문 전환이 살아납니다.
               위드가 직접 들어가 세팅하는 구조로 사장님은 번거롭게 수정하지 않아도 됩니다.
             </p>
@@ -1130,13 +1134,14 @@
   <script>
     const categoryMap = {
       '음식점': [
-        '고깃집','횟집','이자카야','술집','한식집','중식집','일식집','양식집','직접입력'  
+        '고깃집','횟집','이자카야','술집','한식집','중식집','일식집','양식집',
+        '치킨집','햄버거집','분식집','국밥집','족발집','보쌈집','직접입력'
       ],
-      '카페·디저트': ['카페','디저트카페','베이커리'],
-      '뷰티': ['미용실','피부관리','네일샵'],
-      '헬스': ['필라테스','PT샵','요가'],
-      '의료': ['병원','치과','한의원'],
-      '기타': ['기타']
+      '카페·디저트': ['카페','디저트카페','베이커리','직접입력'],
+      '뷰티': ['미용실','피부관리','네일샵','직접입력'],
+      '헬스': ['필라테스','PT샵','요가','직접입력'],
+      '의료': ['병원','치과','한의원','직접입력'],
+      '기타': ['기타','직접입력']
     };
 
     const servicesMap = {
@@ -1169,24 +1174,20 @@
         '나베','직접입력'
       ],
       '양식집': [
-        '파스타','피자','리조또','스테이크','브런치','돈가스','필라프',
+        '파스타','피자','리조또','스테이크','브런치','돈가스','돈까스','필라프',
         '샐러드','오믈렛','수프','직접입력'
       ],
       '치킨집': [
-        '후라이드','양념치킨','간장치킨','순살치킨','맥주','닭강정',
-        '직접입력'
+        '후라이드','양념치킨','간장치킨','순살치킨','맥주','닭강정','직접입력'
       ],
       '햄버거집': [
-        '수제버거','치즈버거','치킨버거','감자튀김','세트메뉴','새우버거',
-        '직접입력'
+        '수제버거','치즈버거','치킨버거','감자튀김','세트메뉴','새우버거','직접입력'
       ],
       '분식집': [
-        '떡볶이','순대','튀김','김밥','라볶이','쫄면','오뎅','돈가스',
-        '직접입력'
+        '떡볶이','순대','튀김','김밥','라볶이','쫄면','오뎅','돈가스','직접입력'
       ],
       '국밥집': [
-        '돼지국밥','순대국밥','소머리국밥','해장국','수육','내장국밥',
-        '직접입력'
+        '돼지국밥','순대국밥','소머리국밥','해장국','수육','내장국밥','직접입력'
       ],
       '족발집': [
         '족발','냉채족발','막국수','세트메뉴','수육','불족발','직접입력'
@@ -1195,15 +1196,13 @@
         '보쌈','굴보쌈','막국수','수육','정식','족보세트','직접입력'
       ],
       '카페': [
-        '커피','브런치','디저트','수제청','시그니처메뉴','베이글','샌드위치',
-        '직접입력'
+        '커피','브런치','디저트','수제청','시그니처메뉴','베이글','샌드위치','직접입력'
       ],
       '디저트카페': [
         '케이크','와플','빙수','마카롱','쿠키','타르트','크로플','직접입력'
       ],
       '베이커리': [
-        '식빵','소금빵','크로와상','샌드위치','케이크','베이글','구움과자',
-        '직접입력'
+        '식빵','소금빵','크로와상','샌드위치','케이크','베이글','구움과자','직접입력'
       ],
       '미용실': [
         '커트','펌','염색','클리닉','두피관리','레이어드컷','볼륨매직','직접입력'
@@ -1233,8 +1232,9 @@
         '추나요법','침치료','한약','다이어트한약','통증관리','교통사고치료','직접입력'
       ],
       '기타': [
-      '직접입력'
-      ]
+        '대표 서비스 1','대표 서비스 2','대표 서비스 3','직접입력'
+      ],
+      '직접입력': ['직접입력']
     };
 
     const keywordMap = {
@@ -1264,28 +1264,40 @@
       '병원': ['병원', '진료', '상담', '치료', '검진'],
       '치과': ['치과', '임플란트', '교정', '스케일링', '치료'],
       '한의원': ['한의원', '추나', '침', '통증', '한약'],
-      '기타': ['업종', '서비스', '방문', '추천', '이용']
+      '기타': ['업종', '서비스', '방문', '추천', '이용'],
+      '직접입력': ['업종', '서비스', '지역', '추천', '방문']
     };
 
     const categories = Object.keys(categoryMap);
-    const targets = ['혼밥','데이트','가족','회식','직장인','관광객','여성고객','직접입력'];
+    const targets = ['혼밥','데이트','가족','회식','직장인','관광객','여성고객','20~30대','40~50대','직접입력'];
     const locations = ['역세권','골목상권','대로변','오피스상권','주택상권','대형상가 내부','직접입력'];
-    const strengths = ['가성비','분위기','전문성','양','서비스','접근성','재방문율','빠른 응대'];
+    const strengths = ['가성비','분위기','전문성','양','서비스','접근성','재방문율','빠른 응대','직접입력'];
     const parkings = ['가능','불가','근처 공영주차장','건물 주차 가능'];
     const tones = ['신뢰형','친근형','고급형','직관형'];
 
     const state = {
       category:'음식점',
       industry:'고깃집',
+      customIndustry:'',
       service:'삼겹살',
       customService:'',
       target:'데이트',
+      customTarget:'',
       location:'역세권',
+      customLocation:'',
       strength:'가성비',
+      customStrength:'',
       parking:'가능',
       tone:'신뢰형',
       landmark:''
     };
+
+    function getCurrentIndustryValue() {
+      if (state.industry === '직접입력') {
+        return state.customIndustry || '직접입력';
+      }
+      return state.industry;
+    }
 
     function getCurrentServiceValue() {
       if (state.service === '직접입력') {
@@ -1294,35 +1306,86 @@
       return state.service;
     }
 
-    function toggleCustomServiceInput() {
-      const wrap = document.getElementById('customServiceWrap');
-      if (state.service === '직접입력') {
-        wrap.style.display = 'block';
-      } else {
-        wrap.style.display = 'none';
+    function getCurrentTargetValue() {
+      if (state.target === '직접입력') {
+        return document.getElementById('customTargetInput').value.trim() || state.customTarget || '직접입력';
       }
+      return state.target;
+    }
+
+    function getCurrentLocationValue() {
+      if (state.location === '직접입력') {
+        return document.getElementById('customLocationInput').value.trim() || state.customLocation || '직접입력';
+      }
+      return state.location;
+    }
+
+    function getCurrentStrengthValue() {
+      if (state.strength === '직접입력') {
+        return document.getElementById('customStrengthInput').value.trim() || state.customStrength || '직접입력';
+      }
+      return state.strength;
+    }
+
+    function toggleCustomInputs() {
+      document.getElementById('customServiceWrap').style.display =
+        state.service === '직접입력' ? 'block' : 'none';
+
+      document.getElementById('customTargetWrap').style.display =
+        state.target === '직접입력' ? 'block' : 'none';
+
+      document.getElementById('customLocationWrap').style.display =
+        state.location === '직접입력' ? 'block' : 'none';
+
+      document.getElementById('customStrengthWrap').style.display =
+        state.strength === '직접입력' ? 'block' : 'none';
     }
 
     function createChips(containerId, items, key, onChange){
       const wrap = document.getElementById(containerId);
       wrap.innerHTML = '';
+
       items.forEach(item => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'chip' + (state[key] === item ? ' active' : '');
         btn.textContent = item;
+
         btn.onclick = () => {
           state[key] = item;
+
+          if (key === 'industry' && item !== '직접입력') {
+            state.customIndustry = '';
+          }
+
           if (key === 'service' && item !== '직접입력') {
             state.customService = '';
             document.getElementById('customServiceInput').value = '';
           }
+
+          if (key === 'target' && item !== '직접입력') {
+            state.customTarget = '';
+            document.getElementById('customTargetInput').value = '';
+          }
+
+          if (key === 'location' && item !== '직접입력') {
+            state.customLocation = '';
+            document.getElementById('customLocationInput').value = '';
+          }
+
+          if (key === 'strength' && item !== '직접입력') {
+            state.customStrength = '';
+            document.getElementById('customStrengthInput').value = '';
+          }
+
           if (onChange) onChange(item);
+
           renderAllChips();
           renderLandmarkSuggestions();
-          toggleCustomServiceInput();
+          toggleCustomInputs();
           updateMiniScore();
         };
+
         wrap.appendChild(btn);
       });
     }
@@ -1332,23 +1395,27 @@
         const firstIndustry = categoryMap[selectedCategory][0];
         state.industry = firstIndustry;
         state.service = servicesMap[firstIndustry][0];
+        state.customIndustry = '';
         state.customService = '';
         document.getElementById('customServiceInput').value = '';
       });
 
       createChips('industryChips', categoryMap[state.category], 'industry', (selectedIndustry) => {
-        state.service = servicesMap[selectedIndustry][0];
+        const nextServices = servicesMap[selectedIndustry] || ['직접입력'];
+        state.service = nextServices[0];
+        state.customIndustry = selectedIndustry === '직접입력' ? state.customIndustry : '';
         state.customService = '';
         document.getElementById('customServiceInput').value = '';
       });
 
-      createChips('serviceChips', servicesMap[state.industry], 'service');
+      createChips('serviceChips', servicesMap[state.industry] || ['직접입력'], 'service');
       createChips('targetChips', targets, 'target');
       createChips('locationChips', locations, 'location');
       createChips('strengthChips', strengths, 'strength');
       createChips('parkingChips', parkings, 'parking');
       createChips('toneChips', tones, 'tone');
-      toggleCustomServiceInput();
+
+      toggleCustomInputs();
     }
 
     function getLandmarkSuggestions(region, location) {
@@ -1366,16 +1433,18 @@
       if (location === '대형상가 내부') list.unshift(`${region} 상가 내부`);
       if (location === '오피스상권') list.unshift(`${region} 오피스상권`);
       if (location === '주택상권') list.unshift(`${region} 주택가 인근`);
+      if (location === '직접입력') list.unshift(`${region} 주요 방문지 인근`);
 
       return [...new Set(list)].slice(0, 5);
     }
 
     function renderLandmarkSuggestions() {
       const region = document.getElementById('region').value.trim();
+      const location = getCurrentLocationValue();
       const wrap = document.getElementById('landmarkSuggestionChips');
       wrap.innerHTML = '';
 
-      const suggestions = getLandmarkSuggestions(region, state.location);
+      const suggestions = getLandmarkSuggestions(region, location);
 
       suggestions.forEach(item => {
         const btn = document.createElement('button');
@@ -1539,7 +1608,8 @@
 
       state.category = detected.category;
       state.industry = detected.industry;
-      state.service = servicesMap[detected.industry][0];
+      state.service = (servicesMap[detected.industry] || ['직접입력'])[0];
+      state.customIndustry = '';
       state.customService = '';
 
       if (storeNameGuess) document.getElementById('name').value = storeNameGuess;
@@ -1573,11 +1643,11 @@
         region: document.getElementById('region').value.trim(),
         landmark: state.landmark,
         category: state.category,
-        industry: state.industry,
+        industry: getCurrentIndustryValue(),
         service: getCurrentServiceValue(),
-        target: state.target,
-        location: state.location,
-        strength: state.strength,
+        target: getCurrentTargetValue(),
+        location: getCurrentLocationValue(),
+        strength: getCurrentStrengthValue(),
         parking: state.parking,
         tone: state.tone
       };
@@ -1614,7 +1684,9 @@
         '요가': ['요가', '명상', '운동'],
         '병원': ['병원', '진료', '치료'],
         '치과': ['치과', '임플란트', '교정'],
-        '한의원': ['한의원', '침', '추나', '한약']
+        '한의원': ['한의원', '침', '추나', '한약'],
+        '기타': ['서비스', '업종'],
+        '직접입력': ['서비스', '업종']
       };
       return map[industry] || [industry];
     }
@@ -1856,13 +1928,11 @@
       if (f.region) score += 7;
       if (f.landmark) score += 5;
       if (f.category) score += 5;
-      if (f.industry) score += 6;
-      if (f.service && f.service !== '직접입력') score += 6;
-      if (f.service && f.service !== '직접입력' && f.service.length > 0) score += 0;
+      if (f.industry && f.industry.length > 0) score += 6;
       if (f.service && f.service.length > 0) score += 6;
-      if (f.target) score += 5;
-      if (f.location) score += 5;
-      if (f.strength) score += 5;
+      if (f.target && f.target.length > 0) score += 5;
+      if (f.location && f.location.length > 0) score += 5;
+      if (f.strength && f.strength.length > 0) score += 5;
       if (f.parking) score += 3;
 
       const descriptionAnalysis = getDescriptionAnalysis(f);
@@ -1989,9 +2059,9 @@
       const items = [];
       if (!f.region) items.push('지역 정보가 없어 지역 키워드 최적화가 약합니다.');
       if (!f.service || f.service === '직접입력') items.push('대표 서비스가 구체적으로 정해지지 않아 검색 의도 반영이 부족할 수 있습니다.');
-      if (!f.target) items.push('타겟 고객 설정이 없어 방문 상황별 문구가 약합니다.');
-      if (!f.location) items.push('매장 위치 특성이 없어 길찾기 전환력이 떨어집니다.');
-      if (!f.strength) items.push('강점이 없어 경쟁업체 대비 차별화가 약합니다.');
+      if (!f.target || f.target === '직접입력') items.push('타겟 고객 설정이 구체적이지 않아 방문 상황별 문구가 약할 수 있습니다.');
+      if (!f.location || f.location === '직접입력') items.push('매장 위치 특성이 구체적이지 않아 길찾기 전환력이 떨어질 수 있습니다.');
+      if (!f.strength || f.strength === '직접입력') items.push('매장 강점이 명확하지 않으면 경쟁업체 대비 차별화가 약합니다.');
       if (!f.landmark) items.push('추천 기준점을 선택하지 않아 실제 방문 동선 안내가 약합니다.');
       if (!f.phone) items.push('연락처 정보가 없어 상담 전환 및 기본 신뢰도가 낮습니다.');
       if (!f.existingDescription) items.push('현재 플레이스 상세설명란이 비어 있으면 실문구 진단 정확도가 떨어집니다.');
@@ -2014,14 +2084,21 @@
       document.getElementById('naverLink').value = '';
       document.getElementById('existingDescription').value = '';
       document.getElementById('customServiceInput').value = '';
+      document.getElementById('customTargetInput').value = '';
+      document.getElementById('customLocationInput').value = '';
+      document.getElementById('customStrengthInput').value = '';
 
       state.category = '음식점';
       state.industry = '고깃집';
+      state.customIndustry = '';
       state.service = '삼겹살';
       state.customService = '';
       state.target = '데이트';
+      state.customTarget = '';
       state.location = '역세권';
+      state.customLocation = '';
       state.strength = '가성비';
+      state.customStrength = '';
       state.parking = '가능';
       state.tone = '신뢰형';
       state.landmark = '';
@@ -2038,7 +2115,7 @@
 
       renderAllChips();
       renderLandmarkSuggestions();
-      toggleCustomServiceInput();
+      toggleCustomInputs();
       updateMiniScore();
 
       animateCount(document.getElementById('scoreNumber'), Number(document.getElementById('scoreNumber').textContent) || 29, 29, 700);
@@ -2153,6 +2230,22 @@
 
     document.getElementById('customServiceInput').addEventListener('input', (e) => {
       state.customService = e.target.value.trim();
+      updateMiniScore();
+    });
+
+    document.getElementById('customTargetInput').addEventListener('input', (e) => {
+      state.customTarget = e.target.value.trim();
+      updateMiniScore();
+    });
+
+    document.getElementById('customLocationInput').addEventListener('input', (e) => {
+      state.customLocation = e.target.value.trim();
+      renderLandmarkSuggestions();
+      updateMiniScore();
+    });
+
+    document.getElementById('customStrengthInput').addEventListener('input', (e) => {
+      state.customStrength = e.target.value.trim();
       updateMiniScore();
     });
 

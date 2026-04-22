@@ -528,8 +528,8 @@
           네이버 플레이스 자동 진단 시스템 · 위드
         </div>
         <h1>
-          사장님들은 주목해주세요.<br />
-          <span class="grad">플레이스 최적화가 자동으로 진단됩니다.</span>
+          사장님은 입력만 하세요.<br />
+          <span class="grad">플레이스 최적화가 자동으로 설계됩니다.</span>
         </h1>
         <p class="hero-desc">
           업체명 직접 입력, 네이버 지도 링크만 붙여넣어도 기본정보를 최대한 자동으로 설계해드립니다.
@@ -540,6 +540,22 @@
           <a href="#diagnosis" class="btn btn-primary">지금 무료 진단</a>
           <a href="#results" class="btn btn-secondary">결과 예시</a>
         </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat reveal delay-1">
+            <strong>링크 자동 분석</strong>
+            <p>네이버 지도 링크의 검색어를 기준으로 업체명, 지역, 업종을 자동 설계합니다.</p>
+          </div>
+          <div class="hero-stat reveal delay-2">
+            <strong>2단 업종 선택</strong>
+            <p>업종 카테고리와 세부 업종을 나눠 업종별 정밀도를 높였습니다.</p>
+          </div>
+          <div class="hero-stat reveal delay-3">
+            <strong>실문구 진단</strong>
+            <p>현재 플레이스 상세설명을 붙여넣으면 실제 문구 기준으로 진단합니다.</p>
+          </div>
+        </div>
+      </div>
 
       <div id="diagnosis" class="glass-card reveal">
         <div class="card-header">
@@ -774,6 +790,9 @@
                 <p id="descriptionDiagnosis" style="margin:0;color:#334155;line-height:1.8;">
                   입력 후 결과를 생성하면 상세설명 진단이 표시됩니다.
                 </p>
+                <p id="descriptionModeText" style="margin:10px 0 0;color:#64748b;font-size:13px;line-height:1.7;">
+                  현재 문구를 분석한 뒤 보완 방향에 맞춰 초안을 다시 작성합니다.
+                </p>
               </div>
 
               <div style="margin-bottom:12px;">
@@ -782,9 +801,9 @@
               </div>
 
               <div>
-                <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:6px;">최적화 초안</div>
+                <div style="font-size:13px;color:#64748b;font-weight:800;margin-bottom:6px;">최적화 반영 초안</div>
                 <p id="descriptionOutput" style="margin:0;color:#334155;line-height:1.85;">
-                  입력 후 결과를 생성하면 이곳에 자동 상세설명이 표시됩니다.
+                  입력한 현재 상세설명을 바탕으로 보완된 플레이스 반영 초안이 표시됩니다.
                 </p>
               </div>
             </div>
@@ -1107,13 +1126,11 @@
     function guessStoreName(keyword, regionGuess, industryGuess) {
       if (!keyword) return '';
       let name = keyword;
-
       if (regionGuess) name = name.replace(regionGuess, '').trim();
       if (industryGuess && industryGuess !== '기타') {
         const stripped = name.replace(industryGuess, '').trim();
         if (stripped.length >= 2) name = stripped;
       }
-
       name = name.replace(/\s+/g, ' ').trim();
       if (name.length < 2) return keyword;
       return name;
@@ -1420,24 +1437,78 @@
       return baseKeywords.map(k => `${region} ${k}`);
     }
 
-    function getDescription(f){
-      const region = f.region || '지역';
-      const name = f.name || '업체명';
-      const industry = f.industry || '매장';
-      const service = f.service || industry;
-      const target = f.target || '다양한 고객';
-      const location = f.location || '접근성';
-      const strength = f.strength || '만족도';
-      const landmark = f.landmark ? `${f.landmark} 기준으로 찾기 쉬운 위치에 있어 ` : '';
-      const parking = f.parking ? `주차는 ${f.parking} 기준으로 안내드리고 있으며, ` : '';
+    function buildDescriptionIntro(f) {
+      const region = f.region || '';
+      const name = f.name || '해당 업체';
+      const service = f.service || f.industry || '서비스';
+      return `${region}에서 ${service}를 찾는 분들이 기본 정보부터 방문 포인트까지 한눈에 확인할 수 있도록 정리한 ${name}입니다.`;
+    }
 
-      const toneMap = {
-        '신뢰형': `${region}에서 ${industry}를 찾는 분들이 기본 정보부터 방문 포인트까지 한눈에 확인할 수 있도록 정리한 ${name}입니다. ${landmark}${service} 중심으로 찾는 고객은 물론 ${target} 고객까지 편하게 방문할 수 있도록 구성되어 있으며, ${location} 특성을 살려 접근성을 높였습니다. ${parking}${strength}을 강점으로 두고 있어 첫 방문 고객도 부담 없이 선택하기 좋고, 재방문으로 이어질 수 있도록 핵심 안내를 명확하게 전달하는 방향으로 최적화되어 있습니다.`,
-        '친근형': `${region}에서 ${service} 찾고 있다면 ${name}을 눈여겨볼 수 있습니다. ${landmark}${target} 고객이 편하게 들르기 좋은 분위기와 ${location} 장점을 갖추고 있고, ${strength}이 강점이라 처음 방문하는 분들도 부담 없이 선택하기 좋습니다. ${parking}네이버 플레이스에서 고객이 궁금해하는 포인트를 빠르게 확인할 수 있도록 소개 문구를 구성했습니다.`,
-        '고급형': `${region} 상권에서 ${service} 경쟁력을 높이기 위해 ${name}의 핵심 강점을 중심으로 정리한 소개 문구입니다. ${landmark}${location} 기반의 접근성과 ${target} 고객 수요를 함께 반영했으며, ${strength}을 차별화 요소로 드러내 브랜드 인식을 강화할 수 있도록 구성했습니다. ${parking}단순한 매장 소개가 아니라 검색 노출 이후 방문 전환까지 고려한 플레이스 최적화 문안입니다.`,
-        '직관형': `${name}은 ${region}에서 ${service}를 찾는 고객에게 적합한 ${industry}입니다. ${landmark}${target} 방문에 맞는 이용 환경과 ${location} 장점을 갖추고 있으며, ${strength}이 핵심 포인트입니다. ${parking}스마트플레이스에서 빠르게 이해되고 선택될 수 있도록 핵심 정보 위주로 정리했습니다.`
+    function buildDescriptionBody(f) {
+      const targetMap = {
+        '혼밥': '혼밥 고객도 편하게 방문할 수 있도록',
+        '데이트': '데이트 고객이 부담 없이 찾을 수 있도록',
+        '가족': '가족 식사 수요까지 고려해',
+        '회식': '회식 수요까지 함께 반영해',
+        '직장인': '직장인 방문 수요를 고려해',
+        '관광객': '관광객 방문 동선까지 고려해',
+        '여성고객': '여성 고객이 편하게 방문할 수 있도록',
+        '20~30대': '20~30대 고객 취향을 고려해',
+        '40~50대': '40~50대 고객 수요를 고려해'
       };
-      return toneMap[f.tone] || toneMap['신뢰형'];
+
+      const locationMap = {
+        '역세권': '대중교통으로 방문하기 좋은 위치 장점',
+        '골목상권': '골목 상권 특성을 살린 방문 포인트',
+        '대로변': '대로변 접근성을 살린 방문 편의성',
+        '오피스상권': '오피스 상권 수요를 고려한 방문 편의성',
+        '주택상권': '주택가 상권 특성을 반영한 편안한 접근성',
+        '대형상가 내부': '상가 내부에서 찾기 쉬운 위치 장점'
+      };
+
+      const targetText = targetMap[f.target] || '다양한 고객이 편하게 방문할 수 있도록';
+      const locationText = locationMap[f.location] || '방문 접근성을 높일 수 있도록';
+      const strengthText = f.strength ? `${f.strength}을 강점으로 드러내고` : '매장의 강점을 자연스럽게 보여주고';
+      const landmarkText = f.landmark ? `${f.landmark} 기준으로 찾기 쉬운 위치에 있어 ` : '';
+      const parkingText = f.parking ? `주차는 ${f.parking} 기준으로 안내드리며, ` : '';
+
+      return `${landmarkText}${targetText} ${locationText} ${strengthText} 첫 방문 고객도 매장을 이해하기 쉽도록 구성했습니다. ${parkingText}`.trim();
+    }
+
+    function buildDescriptionEnding(f) {
+      const region = f.region || '지역';
+      const service = f.service || f.industry || '서비스';
+      return `${region}에서 ${service}를 찾는 고객이 검색 후 바로 이해하고 방문까지 이어질 수 있도록 핵심 내용을 정리한 플레이스 최적화 문안입니다.`;
+    }
+
+    function getDescriptionRewriteMode(f, analysis) {
+      if (!f.existingDescription) return 'fresh';
+      if (analysis.score >= 80) return 'polish';
+      if (analysis.score >= 55) return 'improve';
+      return 'rewrite';
+    }
+
+    function getDescription(f, analysis = null){
+      const currentAnalysis = analysis || getDescriptionAnalysis(f);
+      const mode = getDescriptionRewriteMode(f, currentAnalysis);
+
+      const intro = buildDescriptionIntro(f);
+      const body = buildDescriptionBody(f);
+      const ending = buildDescriptionEnding(f);
+
+      if (mode === 'polish') {
+        return `${intro} ${body} ${ending}`;
+      }
+
+      if (mode === 'improve') {
+        return `${intro} ${body} 대표 메뉴와 방문 상황, 매장 강점이 더 선명하게 보이도록 문장을 정리했습니다. ${ending}`;
+      }
+
+      if (mode === 'rewrite') {
+        return `${intro} ${body} 감성 표현보다 지역, 대표 서비스, 방문 포인트가 먼저 보이도록 다시 구성했습니다. ${ending}`;
+      }
+
+      return `${intro} ${body} ${ending}`;
     }
 
     function getDirections(f){
@@ -1522,16 +1593,23 @@
 
       const totalScore = calcScore(f);
       const keywords = getKeywords(f);
-      const description = getDescription(f);
+      const descriptionAnalysis = getDescriptionAnalysis(f);
+      const description = getDescription(f, descriptionAnalysis);
       const directions = getDirections(f);
       const missing = getMissing(f);
       const consult = getConsultReasons(totalScore, missing.length);
       const review = getReviewReply(f);
 
-      const descriptionAnalysis = getDescriptionAnalysis(f);
       const descriptionGrade = getDescriptionGradeFromAnalysis(descriptionAnalysis);
       const descriptionDiagnosisText = getDescriptionDiagnosisText(f, descriptionAnalysis);
       const descriptionFixPoints = getDescriptionFixPointsFromAnalysis(f, descriptionAnalysis);
+
+      const modeTextMap = {
+        polish: '현재 문구를 유지하면서 더 매끄럽게 다듬은 버전입니다.',
+        improve: '현재 문구의 장점은 살리고, 검색형 구조를 보완한 버전입니다.',
+        rewrite: '현재 문구의 정보 전달력이 약해 핵심 요소 중심으로 다시 쓴 버전입니다.',
+        fresh: '현재 상세설명이 없어 기본 입력값 기준으로 새롭게 작성한 버전입니다.'
+      };
 
       document.getElementById('miniScore').textContent = totalScore;
       animateCount(
@@ -1559,6 +1637,9 @@
       gradeEl.style.borderColor = descriptionGrade.border;
 
       document.getElementById('descriptionDiagnosis').textContent = descriptionDiagnosisText;
+      document.getElementById('descriptionModeText').textContent =
+        modeTextMap[getDescriptionRewriteMode(f, descriptionAnalysis)];
+
       renderList('descriptionFixList', descriptionFixPoints, '');
 
       const keywordWrap = document.getElementById('keywordOutput');
@@ -1616,7 +1697,8 @@
       gradeEl.style.borderColor = '#bfdbfe';
 
       document.getElementById('descriptionDiagnosis').textContent = '입력 후 결과를 생성하면 상세설명 진단이 표시됩니다.';
-      document.getElementById('descriptionOutput').textContent = '입력 후 결과를 생성하면 이곳에 자동 상세설명이 표시됩니다.';
+      document.getElementById('descriptionModeText').textContent = '현재 문구를 분석한 뒤 보완 방향에 맞춰 초안을 다시 작성합니다.';
+      document.getElementById('descriptionOutput').textContent = '입력한 현재 상세설명을 바탕으로 보완된 플레이스 반영 초안이 표시됩니다.';
       document.getElementById('directionOutput').textContent = '입력 후 결과를 생성하면 이곳에 길찾기 문구가 표시됩니다.';
       document.getElementById('reviewOutput').textContent = '리뷰 답변 템플릿도 함께 생성됩니다.';
       document.getElementById('keywordOutput').innerHTML = '<span class="keyword">지역 업종</span><span class="keyword">지역 대표 키워드</span>';
